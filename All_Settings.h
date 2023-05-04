@@ -32,7 +32,6 @@ wlanSSID wifiNetworks[] {
     {"Loretz_Gast", "Lor_Steg_98"}
 };
 
-
 const char *splashFile = "/splash/steg.jpg";
 
 // Set the forecast longitude and latitude to at least 4 decimal places
