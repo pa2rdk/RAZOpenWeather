@@ -1,7 +1,8 @@
 Settings settings = {
-    '^',                                //chkDigit
+    '*',                                //chkDigit
     "MARODEKWiFi",                      //wifiSSID[25];
     "MAROWiFi19052004!",                //wifiPass[25];   
+    "aa74ca1fd733d92c34ac4c2a6c73ef99", //openWeatherAPI;
     1,                                  //useMQTT                       
     "mqtt.rjdekok.nl",                  //mqttBroker;
     "Robert",                           //mqttUser; 
@@ -10,7 +11,7 @@ Settings settings = {
     1883,                               //mqttPort; 
     0,                                  //useWapp;
     "0651847704",                       //wappPhone;
-    "aa74ca1fd733d92c34ac4c2a6c73ef99", //wappAPI;
+    "your WhatsAppAPI key here",        //wappAPI;
     900,                                //wappInterval;
     1,                                  //serialMessages;
     0,                                  //hasLocalTempSensor;
@@ -34,7 +35,7 @@ wlanSSID wifiNetworks[] {
 const char *splashFile = "/splash/steg.jpg";
 
 // Set the forecast longitude and latitude to at least 4 decimal places
-WeatherStation weatherStation[] = { // Max 10
+WeatherStation weatherStation[4] = { // Max 10
   // {"Zoetermeer"       , "52.0520"   , "4.4747"      },
   // {"Poet Laval"       , "44.528251" , "5.021722"    },
   // {"Steg"             , "47.107914" , "9.578158"    },

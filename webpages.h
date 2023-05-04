@@ -373,6 +373,15 @@ const char settings_html[] PROGMEM = R"rawliteral(
           </tr>
 
           <tr>
+            <td style="text-align:right;font-size: medium; color: white">
+              OpenWeather APIkey: 
+            </td>
+            <td style="text-align:left;font-size: medium;">
+              <input type="text" name="openWeatherAPI" value="%openWeatherAPI%">
+            </td>
+          </tr>
+
+          <tr>
             <td style="text-align:right;font-size: medium;">
               Enable MQTT:
             </td>

@@ -142,6 +142,7 @@ typedef struct {
   byte chkDigit;
   char wifiSSID[25];
   char wifiPass[25];
+  char openWeatherAPI[35];
   bool useMQTT;
   char mqttBroker[25];
   char mqttUser[25];
@@ -237,6 +238,16 @@ void setup() {
     calData[3] = 3512;
     calData[4] = 2;
   }
+
+  WeatherStation weatherLocation;
+  weatherLocation.name = settings.city1;
+  weatherLocation.latitude = settings.latitude1;
+  weatherLocation.longitude = settings.longitude1;
+  weatherStation[2] = weatherLocation;
+  weatherLocation.name = settings.city2;
+  weatherLocation.latitude = settings.latitude2;
+  weatherLocation.longitude = settings.longitude2;
+  weatherStation[3] = weatherLocation;
 
   if (!LoadConfig()){
     if (settings.isDebug) Serial.println(F("Writing defaults"));
@@ -512,7 +523,7 @@ void updateWeather() {
   String latitude  = weatherStation[actualWeatherStation].latitude;
   String longitude = weatherStation[actualWeatherStation].longitude;
 
-  bool parsed = ow.getForecast(current, hourly, daily, settings.wappAPI, latitude, longitude, "metric", "nl");
+  bool parsed = ow.getForecast(current, hourly, daily, settings.openWeatherAPI, latitude, longitude, "metric", "nl");
 
   printWeather(); // For debug, turn on output with #define SERIAL_MESSAGES
 
@@ -1611,7 +1622,7 @@ bool checkMQTTConnection() {
 //****************************************************************************************************************************************
 void sendMessagetoWHATSAPP(String message) { // Send message to WHATSAPP
   // Data to send with HTTP POST
-  String url = "https://api.callmebot.com/whatsapp.php?phone=" + String(settings.wappPhone) + "&wappAPI=" + String(settings.wappAPI) + "&text=" + urlEncode(message);
+  String url = "https://api.callmebot.com/whatsapp.php?phone=" + String(settings.wappPhone) + "&apikey=" + String(settings.wappAPI) + "&text=" + urlEncode(message);
   HTTPClient http;
   http.begin(url);
 
@@ -1660,6 +1671,7 @@ void LocalTemp() {
 void SaveSettings(AsyncWebServerRequest *request){
   if (request->hasParam("wifiSSID")) request->getParam("wifiSSID")->value().toCharArray(settings.wifiSSID,25);
   if (request->hasParam("wifiPass")) request->getParam("wifiPass")->value().toCharArray(settings.wifiPass,25);  
+  if (request->hasParam("openWeatherAPI")) request->getParam("openWeatherAPI")->value().toCharArray(settings.openWeatherAPI,35);
   settings.useMQTT = request->hasParam("useMQTT");
   if (request->hasParam("mqttBroker")) request->getParam("mqttBroker")->value().toCharArray(settings.mqttBroker,25); 
   if (request->hasParam("mqttUser")) request->getParam("mqttUser")->value().toCharArray(settings.mqttUser,25);
@@ -1688,6 +1700,7 @@ void SaveSettings(AsyncWebServerRequest *request){
 void PrintConfig(){
   Serial.printf("wifiSSID: %s\r\n",settings.wifiSSID);
   Serial.printf("wifiPass: %s\r\n",settings.wifiPass);
+  Serial.printf("openWeatherAPI: %s\r\n",settings.openWeatherAPI);
   Serial.printf("useMQTT: %s\r\n",settings.useMQTT?"yes":"no");
   Serial.printf("mqttBroker: %s\r\n",settings.mqttBroker);
   Serial.printf("mqttUser: %s\r\n",settings.mqttUser);
@@ -1717,6 +1730,7 @@ String processor(const String& var){
   char buf[100];
   if (var=="wifiSSID") return settings.wifiSSID;
   if (var=="wifiPass") return settings.wifiPass;
+  if (var=="openWeatherAPI") return settings.openWeatherAPI;
   if (var=="useMQTT") return settings.useMQTT?"checked":"";
   if (var=="mqttBroker") return settings.mqttBroker;
   if (var=="mqttUser") return settings.mqttUser;
