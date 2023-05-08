@@ -160,11 +160,17 @@ typedef struct {
   int pageDelay;
   bool isDebug;
   char city1[25];
-  char latitude1[12];
-  char longitude1[12];
+  char latitude1[15];
+  char longitude1[15];
   char city2[25];
-  char latitude2[12];
-  char longitude2[12];  
+  char latitude2[15];
+  char longitude2[15];  
+  char city3[25];
+  char latitude3[15];
+  char longitude3[15];  
+  char city4[25];
+  char latitude4[15];
+  char longitude4[15];      
 } Settings;
 
 typedef struct {  // Location name data
@@ -248,6 +254,14 @@ void setup() {
   weatherLocation.latitude = settings.latitude2;
   weatherLocation.longitude = settings.longitude2;
   weatherStation[3] = weatherLocation;
+  weatherLocation.name = settings.city3;
+  weatherLocation.latitude = settings.latitude3;
+  weatherLocation.longitude = settings.longitude3;
+  weatherStation[4] = weatherLocation;
+  weatherLocation.name = settings.city4;
+  weatherLocation.latitude = settings.latitude4;
+  weatherLocation.longitude = settings.longitude4;
+  weatherStation[5] = weatherLocation;
 
   if (!LoadConfig()){
     if (settings.isDebug) Serial.println(F("Writing defaults"));
@@ -1695,6 +1709,14 @@ void SaveSettings(AsyncWebServerRequest *request){
   if (request->hasParam("city2")) request->getParam("city2")->value().toCharArray(settings.city2,25);
   if (request->hasParam("latitude2")) request->getParam("latitude2")->value().toCharArray(settings.latitude2,25);
   if (request->hasParam("longitude2")) request->getParam("longitude2")->value().toCharArray(settings.longitude2,25);    
+
+  if (request->hasParam("city3")) request->getParam("city3")->value().toCharArray(settings.city3,25);
+  if (request->hasParam("latitude3")) request->getParam("latitude3")->value().toCharArray(settings.latitude3,25);
+  if (request->hasParam("longitude3")) request->getParam("longitude3")->value().toCharArray(settings.longitude3,25);  
+
+  if (request->hasParam("city4")) request->getParam("city4")->value().toCharArray(settings.city4,25);
+  if (request->hasParam("latitude4")) request->getParam("latitude4")->value().toCharArray(settings.latitude4,25);
+  if (request->hasParam("longitude4")) request->getParam("longitude4")->value().toCharArray(settings.longitude4,25);  
 }
 
 void PrintConfig(){
@@ -1724,6 +1746,14 @@ void PrintConfig(){
   Serial.printf("city2: %s\r\n",settings.city2);
   Serial.printf("latitude2: %s\r\n",settings.latitude2);  
   Serial.printf("longitude2: %s\r\n",settings.longitude2); 
+
+  Serial.printf("city3: %s\r\n",settings.city3);
+  Serial.printf("latitude3: %s\r\n",settings.latitude3);  
+  Serial.printf("longitude3: %s\r\n",settings.longitude3); 
+
+  Serial.printf("city4: %s\r\n",settings.city4);
+  Serial.printf("latitude4: %s\r\n",settings.latitude4);  
+  Serial.printf("longitude4: %s\r\n",settings.longitude4); 
 }
 
 String processor(const String& var){
@@ -1754,6 +1784,14 @@ String processor(const String& var){
   if (var=="city2") return settings.city2;
   if (var=="latitude2") return settings.latitude2;
   if (var=="longitude2") return settings.longitude2;
+
+  if (var=="city3") return settings.city3;
+  if (var=="latitude3") return settings.latitude3;
+  if (var=="longitude3") return settings.longitude3;
+
+  if (var=="city4") return settings.city4;
+  if (var=="latitude4") return settings.latitude4;
+  if (var=="longitude4") return settings.longitude4;
 
   if(var == "location") return weatherStation[actualWeatherStation].name;
   if(var == "dt") return strDate(current->dt).c_str();

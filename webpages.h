@@ -530,6 +530,28 @@ const char settings_html[] PROGMEM = R"rawliteral(
           </tr>
 
           <tr>
+            <td style="text-align:right;font-size: medium; color: white">
+              City3/Lat/Lon:: 
+            </td>
+            <td style="text-align:left;font-size: medium;">
+              <input type="text" name="city3" value="%city3%">
+              <input type="text" name="latitude3" value="%latitude3%">
+              <input type="text" name="longitude3" value="%longitude3%">
+            </td>
+          </tr>
+
+          <tr>
+            <td style="text-align:right;font-size: medium; color: white">
+              City4/Lat/Lon:: 
+            </td>
+            <td style="text-align:left;font-size: medium;">
+              <input type="text" name="city4" value="%city4%">
+              <input type="text" name="latitude4" value="%latitude4%">
+              <input type="text" name="longitude4" value="%longitude4%">
+            </td>
+          </tr>
+
+          <tr>
             <td style="text-align:right;font-size: medium;">
               Debugmode:
             </td>

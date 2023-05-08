@@ -1,5 +1,5 @@
 Settings settings = {
-    '*',                                //chkDigit
+    '#',                                //chkDigit
     "YourSSID",                         //wifiSSID[25];
     "YourWiFiPass!",                    //wifiPass[25];   
     "your openWether API key here",     //openWeatherAPI;
@@ -24,7 +24,13 @@ Settings settings = {
     "6.4613935",                        //Longitude1
     "Zoetermeer",                       //City2
     "52.0520",                          //Latitude2
-    "4.4747"                            //Longitude2
+    "4.4747",                           //Longitude2
+    "Steg",                             //City3
+    "47.107914",                        //Latitude3
+    "9.578158",                         //Longitude3
+    "Cambridge Bay",                    //City4
+    "69.107082",                        //Latitude4
+    "-105.12177"                        //Longitude4
 };
 
 wlanSSID wifiNetworks[] {
@@ -35,7 +41,7 @@ wlanSSID wifiNetworks[] {
 const char *splashFile = "/splash/steg.jpg";
 
 // Set the forecast longitude and latitude to at least 4 decimal places
-WeatherStation weatherStation[] = { // Max 10
+WeatherStation weatherStation[6] = { // Max 10
   {"Noord-pool"       , "90.0"      , "0.0"         },
   {"Zuid-pool"        , "-90.0"     , "0.0"         }
 };
