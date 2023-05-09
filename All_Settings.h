@@ -1,5 +1,5 @@
 Settings settings = {
-    '#',                                //chkDigit
+    '+',                                //chkDigit
     "YourSSID",                         //wifiSSID[25];
     "YourWiFiPass!",                    //wifiPass[25];   
     "your openWether API key here",     //openWeatherAPI;
@@ -18,7 +18,7 @@ Settings settings = {
     0,                                  //formatSpiffs;
     900,                                //updateInterval;
     3,                                  //pageDelay
-    1,                                  //isDebug
+    0,                                  //actualWeatherStation
     "Sinderen",                         //City1
     "51.9037113",                       //Latitude1
     "6.4613935",                        //Longitude1
@@ -30,7 +30,8 @@ Settings settings = {
     "9.578158",                         //Longitude3
     "Cambridge Bay",                    //City4
     "69.107082",                        //Latitude4
-    "-105.12177"                        //Longitude4
+    "-105.12177",                       //Longitude4
+    1                                   //isDebug
 };
 
 wlanSSID wifiNetworks[] {

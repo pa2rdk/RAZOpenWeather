@@ -1,4 +1,5 @@
 // *************************************************************************************
+//  V2.0.1  09-05-23 Select location online
 //  V2.0.0  01-05-23 Websettings
 //  V1.8.6  13-01-23 Webpage added
 //  V1.8.5  05-12-22 Local temperature added
@@ -127,7 +128,6 @@ uint16_t maxWebBytes = 1700;          // max. bytes to read from content
 String solarBuf;                      // to hold the compressed content
 String contentStrings[10];            // holds the IAP data
 String tot;                           // Total string for WHATSAPP
-int actualWeatherStation;             // Pointer to selected weatherlocation
 long lastRefresh = -1;                // Last refresh in millis()
 long lastWHATSAPPRefresh = -1;        // Last WHATSAPPrefresh in millis()
 long lastLocTempRefresh  = -1;        // last LocTempRefresh in millis;
@@ -158,7 +158,7 @@ typedef struct {
   bool formatSpiffs;
   int updateInterval;
   int pageDelay;
-  bool isDebug;
+  int actualWeatherStation;
   char city1[25];
   char latitude1[15];
   char longitude1[15];
@@ -171,6 +171,7 @@ typedef struct {
   char city4[25];
   char latitude4[15];
   char longitude4[15];      
+  bool isDebug;
 } Settings;
 
 typedef struct {  // Location name data
@@ -245,29 +246,12 @@ void setup() {
     calData[4] = 2;
   }
 
-  WeatherStation weatherLocation;
-  weatherLocation.name = settings.city1;
-  weatherLocation.latitude = settings.latitude1;
-  weatherLocation.longitude = settings.longitude1;
-  weatherStation[2] = weatherLocation;
-  weatherLocation.name = settings.city2;
-  weatherLocation.latitude = settings.latitude2;
-  weatherLocation.longitude = settings.longitude2;
-  weatherStation[3] = weatherLocation;
-  weatherLocation.name = settings.city3;
-  weatherLocation.latitude = settings.latitude3;
-  weatherLocation.longitude = settings.longitude3;
-  weatherStation[4] = weatherLocation;
-  weatherLocation.name = settings.city4;
-  weatherLocation.latitude = settings.latitude4;
-  weatherLocation.longitude = settings.longitude4;
-  weatherStation[5] = weatherLocation;
-
   if (!LoadConfig()){
     if (settings.isDebug) Serial.println(F("Writing defaults"));
     SaveConfig();
   }
   LoadConfig();
+  LoadWeatherLocations();
 
   unsigned long timeout = millis();
   bool timedOut = false;
@@ -359,9 +343,16 @@ void setup() {
   server.on("/store", HTTP_GET, [] (AsyncWebServerRequest *request) {
     SaveSettings(request);
     SaveConfig();
+    LoadWeatherLocations();
     printConfig=true;
     request->send_P(200, "text/html", index_html, processor);
   }); 
+
+  server.on("/golocation", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    if (request->hasParam("location")) settings.actualWeatherStation = request->getParam("location")->value().toInt();
+    printConfig=true;
+    request->send_P(200, "text/html", index_html, processor);
+  });
 
   server.begin();
   Serial.println("HTTP server started");
@@ -391,6 +382,26 @@ void setup() {
   daily =   new OW_daily;
   hourly =  new OW_hourly;
 
+}
+
+void LoadWeatherLocations(){
+  WeatherStation weatherLocation;
+  weatherLocation.name = settings.city1;
+  weatherLocation.latitude = settings.latitude1;
+  weatherLocation.longitude = settings.longitude1;
+  weatherStation[2] = weatherLocation;
+  weatherLocation.name = settings.city2;
+  weatherLocation.latitude = settings.latitude2;
+  weatherLocation.longitude = settings.longitude2;
+  weatherStation[3] = weatherLocation;
+  weatherLocation.name = settings.city3;
+  weatherLocation.latitude = settings.latitude3;
+  weatherLocation.longitude = settings.longitude3;
+  weatherStation[4] = weatherLocation;
+  weatherLocation.name = settings.city4;
+  weatherLocation.latitude = settings.latitude4;
+  weatherLocation.longitude = settings.longitude4;
+  weatherStation[5] = weatherLocation;
 }
 
 bool Connect2WiFi(){
@@ -425,6 +436,7 @@ void loop() {
 
   if (printConfig){
     PrintConfig();
+    lastRefresh = -1;
     printConfig=false;
   }
 
@@ -534,10 +546,8 @@ void updateWeather() {
   else
     fillSegment(22, 22, 0, (int) (50 * 3.6), 16, TFT_NAVY);
 
-  String latitude  = weatherStation[actualWeatherStation].latitude;
-  String longitude = weatherStation[actualWeatherStation].longitude;
-
-  bool parsed = ow.getForecast(current, hourly, daily, settings.openWeatherAPI, latitude, longitude, "metric", "nl");
+  Serial.printf("Actual weather %d = from lat:%s and lon:%s\r\n",settings.actualWeatherStation, weatherStation[settings.actualWeatherStation].latitude, weatherStation[settings.actualWeatherStation].longitude);
+  bool parsed = ow.getForecast(current, hourly, daily, settings.openWeatherAPI, weatherStation[settings.actualWeatherStation].latitude, weatherStation[settings.actualWeatherStation].longitude, "metric", "nl");
 
   printWeather(); // For debug, turn on output with #define SERIAL_MESSAGES
 
@@ -635,7 +645,7 @@ void drawCurrentWeather() {
   tft.setTextDatum(BC_DATUM);
   tft.setTextColor(TFT_ORANGE, TFT_BLACK);
   tft.setTextPadding(240);
-  tft.drawString(weatherStation[actualWeatherStation].name, 120, 16);
+  tft.drawString(weatherStation[settings.actualWeatherStation].name, 120, 16);
   String weatherIcon = "";
 
   String currentSummary = current->main;
@@ -937,7 +947,7 @@ if (settings.serialMessages){
   Serial.println("Weather from OpenWeather\n");
 
   Serial.println("############### Current weather ###############\n");
-  Serial.print("weatherStation     : "); Serial.println(weatherStation[actualWeatherStation].name);
+  Serial.print("weatherStation     : "); Serial.println(weatherStation[settings.actualWeatherStation].name);
   Serial.print("dt (time)          : "); Serial.println(strDate(current->dt));
   Serial.print("sunrise            : "); Serial.println(strDate(current->sunrise));
   Serial.print("sunset             : "); Serial.println(strDate(current->sunset));
@@ -953,7 +963,7 @@ if (settings.serialMessages){
   Serial.println();
 
   if (settings.useWapp){
-    String loc = "   " + String(weatherStation[actualWeatherStation].name) + String(char(13)) + String(char(10));
+    String loc = "   " + String(weatherStation[settings.actualWeatherStation].name) + String(char(13)) + String(char(10));
     String tim = "Time                  : " + String(strDate(current->dt)) + String(char(13)) + String(char(10));
     String mai = "Main                  : " + String(current->main) + String(char(13)) + String(char(10));
     String tem = "Temp                 : " + String(current->temp) + " oC"  + String(char(13)) + String(char(10));
@@ -995,7 +1005,7 @@ if (settings.serialMessages){
 
   if (settings.useMQTT){
     if (checkMQTTConnection()) {
-      client.publish(String(settings.mqttSubject) + "weather/location", weatherStation[actualWeatherStation].name);
+      client.publish(String(settings.mqttSubject) + "weather/location", weatherStation[settings.actualWeatherStation].name);
       client.publish(String(settings.mqttSubject) + "weather/dt", strDate(current->dt));
       client.publish(String(settings.mqttSubject) + "weather/sunrise", strDate(current->sunrise));
       client.publish(String(settings.mqttSubject) + "weather/sunset", strDate(current->sunset));
@@ -1083,21 +1093,15 @@ void locationList() {
 bool useLocation(bool useLast, uint16_t touchX, uint16_t touchY) {
   bool showLocList = true;
   if (useLast) {
-    EEPROM.get(EEPROM_ADDRESS, actualWeatherStation);
-    if (actualWeatherStation >= 0 and actualWeatherStation <= nrOffLocations) showLocList = false;
+    if (settings.actualWeatherStation >= 0 and settings.actualWeatherStation <= nrOffLocations) showLocList = false;
   } else {
     for (int n = 0; n <= nrOffLocations; n++) {
       if ((touchX > ((weatherLocation[n].Xlocos) + (weatherLocation[n].Xlocnr))) and (touchX < ((weatherLocation[n].Xlocos) + (weatherLocation[n].Xlocsr) + (weatherLocation[n].Xlocnr))) and (touchY > ((weatherLocation[n].Ylocos) + (weatherLocation[n].Ylocnr))) and (touchY < ((weatherLocation[n].Ylocos) + (weatherLocation[n].Ylocsr) + (weatherLocation[n].Ylocnr)))) {
         delay(400);
         showLocList = false;
-        actualWeatherStation = n;
+        settings.actualWeatherStation = n;
       }
     }
-  }
-
-  if (!showLocList) {
-    EEPROM.put(EEPROM_ADDRESS, actualWeatherStation);
-    EEPROM.commit();
   }
   return showLocList;
 }
@@ -1391,9 +1395,9 @@ void readIAPData(void) {
   }
 
 if (settings.isDebug) {
-  Serial.println("===========================================");
+  Serial.println("=========================================== ");
   Serial.print(iapBuf);
-  Serial.println("===========================================");
+  Serial.println("=========================================== ");
 }
 
   String t;
@@ -1450,9 +1454,9 @@ void readIAPBEData(void) {
   }
 
 if (settings.isDebug){
-  Serial.println("===========================================");
+  Serial.println("=========================================== ");
   Serial.print(iapBuf);
-  Serial.println("===========================================");
+  Serial.println("=========================================== ");
 }
 
   uint16_t pos = iapBuf.lastIndexOf("\n");  // Eliminate last line
@@ -1529,7 +1533,7 @@ void handlePage4(void) {  // second side of the solar datas
     tft.println(parseString(contentData[i]));
     oddLine = !oddLine;
   }
-  tft.print("\n   =====>>  EOM  <<=====");  // END OF MESSAGE !
+  tft.print("\n   =====>>  EOM  <<===== ");  // END OF MESSAGE !
   tft.setFreeFont(NULL);;
   tft.fillRoundRect(0, 300, 240, 20, 5, TFT_MAROON);
   tft.drawRoundRect(0, 300, 240, 20, 5, TFT_WHITE);
@@ -1702,6 +1706,8 @@ void SaveSettings(AsyncWebServerRequest *request){
   if (request->hasParam("pageDelay")) settings.pageDelay = request->getParam("pageDelay")->value().toInt();
   settings.isDebug = request->hasParam("isDebug");
 
+  if (request->hasParam("actualWeatherStation")) settings.actualWeatherStation = request->getParam("actualWeatherStation")->value().toInt();
+
   if (request->hasParam("city1")) request->getParam("city1")->value().toCharArray(settings.city1,25);
   if (request->hasParam("latitude1")) request->getParam("latitude1")->value().toCharArray(settings.latitude1,25);
   if (request->hasParam("longitude1")) request->getParam("longitude1")->value().toCharArray(settings.longitude1,25);  
@@ -1739,6 +1745,8 @@ void PrintConfig(){
   Serial.printf("pageDelay: %d\r\n",settings.pageDelay);
   Serial.printf("isDebug: %s\r\n",settings.isDebug?"yes":"no");
 
+  Serial.printf("actualWeatherStation: %d\r\n",settings.actualWeatherStation);
+
   Serial.printf("city1: %s\r\n",settings.city1);
   Serial.printf("latitude1: %s\r\n",settings.latitude1);  
   Serial.printf("longitude1: %s\r\n",settings.longitude1);    
@@ -1758,64 +1766,67 @@ void PrintConfig(){
 
 String processor(const String& var){
   char buf[100];
-  if (var=="wifiSSID") return settings.wifiSSID;
-  if (var=="wifiPass") return settings.wifiPass;
-  if (var=="openWeatherAPI") return settings.openWeatherAPI;
-  if (var=="useMQTT") return settings.useMQTT?"checked":"";
-  if (var=="mqttBroker") return settings.mqttBroker;
-  if (var=="mqttUser") return settings.mqttUser;
-  if (var=="mqttPass") return settings.mqttPass;
-  if (var=="mqttSubject") return settings.mqttSubject;
-  if (var=="mqttPort") return String(settings.mqttPort);
-  if (var=="useWAPP") return settings.useWapp?"checked":"";
-  if (var=="wappPhone") return settings.wappPhone;
-  if (var=="wappAPI") return settings.wappAPI;
-  if (var=="wappInterval") return String(settings.wappInterval);
-  if (var=="serialMessages") return settings.serialMessages?"checked":"";
-  if (var=="hasLocalTempSensor") return settings.hasLocalTempSensor?"checked":"";  
-  if (var=="updateInterval") return String(settings.updateInterval);
-  if (var=="pageDelay") return String(settings.pageDelay);
-  if (var=="isDebug") return settings.isDebug?"checked":"";
+  if (var == "wifiSSID") return settings.wifiSSID;
+  if (var == "wifiPass") return settings.wifiPass;
+  if (var == "openWeatherAPI") return settings.openWeatherAPI;
+  if (var == "useMQTT") return settings.useMQTT?"checked":"";
+  if (var == "mqttBroker") return settings.mqttBroker;
+  if (var == "mqttUser") return settings.mqttUser;
+  if (var == "mqttPass") return settings.mqttPass;
+  if (var == "mqttSubject") return settings.mqttSubject;
+  if (var == "mqttPort") return String(settings.mqttPort);
+  if (var == "useWAPP") return settings.useWapp?"checked":"";
+  if (var == "wappPhone") return settings.wappPhone;
+  if (var == "wappAPI") return settings.wappAPI;
+  if (var == "wappInterval") return String(settings.wappInterval);
+  if (var == "serialMessages") return settings.serialMessages?"checked":"";
+  if (var == "hasLocalTempSensor") return settings.hasLocalTempSensor?"checked":"";  
+  if (var == "updateInterval") return String(settings.updateInterval);
+  if (var == "pageDelay") return String(settings.pageDelay);
+  if (var == "isDebug") return settings.isDebug?"checked":"";
 
-  if (var=="city1") return settings.city1;
-  if (var=="latitude1") return settings.latitude1;
-  if (var=="longitude1") return settings.longitude1;
+  if (var == "actualWeatherStation") return String(settings.actualWeatherStation);
 
-  if (var=="city2") return settings.city2;
-  if (var=="latitude2") return settings.latitude2;
-  if (var=="longitude2") return settings.longitude2;
+  if (var == "city1") return settings.city1;
+  if (var == "latitude1") return settings.latitude1;
+  if (var == "longitude1") return settings.longitude1;
 
-  if (var=="city3") return settings.city3;
-  if (var=="latitude3") return settings.latitude3;
-  if (var=="longitude3") return settings.longitude3;
+  if (var == "city2") return settings.city2;
+  if (var == "latitude2") return settings.latitude2;
+  if (var == "longitude2") return settings.longitude2;
 
-  if (var=="city4") return settings.city4;
-  if (var=="latitude4") return settings.latitude4;
-  if (var=="longitude4") return settings.longitude4;
+  if (var == "city3") return settings.city3;
+  if (var == "latitude3") return settings.latitude3;
+  if (var == "longitude3") return settings.longitude3;
 
-  if(var == "location") return weatherStation[actualWeatherStation].name;
-  if(var == "dt") return strDate(current->dt).c_str();
-  if(var == "sunrise") return strDate(current->sunrise).c_str();
-  if(var == "sunset") return strDate(current->sunset).c_str();
-  if(var == "main") return current->main.c_str();
-  if(var == "temp") return (String(current->temp)).c_str();
-  if(var == "humidity") return (String(current->humidity) + "&#37;").c_str();
-  if(var == "pressure") return (String(current->pressure,0) + " hPa").c_str();
-  if(var == "wind_speed") return (String(windspeedconv(current->wind_speed)) + " Bft").c_str();
-  if(var == "wind_deg") return winddir[calcWindAngle(current->wind_deg)].c_str();
-  if(var == "clouds") return (String(current->clouds) + "&#37;").c_str();
-  if(var == "weatherIcon"){
+  if (var == "city4") return settings.city4;
+  if (var == "latitude4") return settings.latitude4;
+  if (var == "longitude4") return settings.longitude4;
+
+  if (var == "locationList") return WebLocationList();
+  if (var == "location") return weatherStation[settings.actualWeatherStation].name;
+  if (var == "dt") return strDate(current->dt).c_str();
+  if (var == "sunrise") return strDate(current->sunrise).c_str();
+  if (var == "sunset") return strDate(current->sunset).c_str();
+  if (var == "main") return current->main.c_str();
+  if (var == "temp") return (String(current->temp)).c_str();
+  if (var == "humidity") return (String(current->humidity) + "&#37;").c_str();
+  if (var == "pressure") return (String(current->pressure,0) + " hPa").c_str();
+  if (var == "wind_speed") return (String(windspeedconv(current->wind_speed)) + " Bft").c_str();
+  if (var == "wind_deg") return winddir[calcWindAngle(current->wind_deg)].c_str();
+  if (var == "clouds") return (String(current->clouds) + "&#37;").c_str();
+  if (var == "weatherIcon"){
     sprintf(buf, "https://www.rjdekok.nl/icon/%s.bmp",getMeteoconIcon(current->id, true));
     return buf;
   }
-  if(var == "wind_degIcon"){
+  if (var == "wind_degIcon"){
     int windAngle = calcWindAngle(current->wind_deg);
     String wind[] = {"N", "NE", "E", "SE", "S", "SW", "W", "NW" };
     sprintf(buf, "https://www.rjdekok.nl/wind/%s.bmp",wind[windAngle]);
     return buf;
   }
 
-  if(var == "moonText" || var == "moonIcon"){
+  if (var == "moonText" || var == "moonIcon"){
     time_t local_time = TIMEZONE.toLocal(current->dt, &tz1_Code);
     uint16_t y = year(local_time);
     uint8_t  m = month(local_time);
@@ -1834,77 +1845,89 @@ String processor(const String& var){
     }
     return "";
   }
-  if(var == "forcastDay1"){
+  if (var == "forcastDay1"){
     String day  = shortDOW[weekday(TIMEZONE.toLocal(daily->dt[1], &tz1_Code))];
     day.toUpperCase();
     sprintf(buf, "%s",day);
     return buf;
   }
-  if(var == "forcastDay2"){
+  if (var == "forcastDay2"){
     String day  = shortDOW[weekday(TIMEZONE.toLocal(daily->dt[2], &tz1_Code))];
     day.toUpperCase();
     sprintf(buf, "%s",day);
     return buf;
   }
-  if(var == "forcastDay3"){
+  if (var == "forcastDay3"){
     String day  = shortDOW[weekday(TIMEZONE.toLocal(daily->dt[3], &tz1_Code))];
     day.toUpperCase();
     sprintf(buf, "%s",day);
     return buf;
   }
-  if(var == "forcastDay4"){
+  if (var == "forcastDay4"){
     String day  = shortDOW[weekday(TIMEZONE.toLocal(daily->dt[4], &tz1_Code))];
     day.toUpperCase();
     sprintf(buf, "%s",day);
     return buf;
   }
-  if(var == "minDay1") return String(daily->temp_min[1], 0).c_str();
-  if(var == "maxDay1") return String(daily->temp_max[1], 0).c_str();
-  if(var == "minDay2") return String(daily->temp_min[2], 0).c_str();
-  if(var == "maxDay2") return String(daily->temp_max[2], 0).c_str();
-  if(var == "minDay3") return String(daily->temp_min[3], 0).c_str();
-  if(var == "maxDay3") return String(daily->temp_max[3], 0).c_str();
-  if(var == "minDay4") return String(daily->temp_min[4], 0).c_str();
-  if(var == "maxDay4") return String(daily->temp_max[4], 0).c_str();
+  if (var == "minDay1") return String(daily->temp_min[1], 0).c_str();
+  if (var == "maxDay1") return String(daily->temp_max[1], 0).c_str();
+  if (var == "minDay2") return String(daily->temp_min[2], 0).c_str();
+  if (var == "maxDay2") return String(daily->temp_max[2], 0).c_str();
+  if (var == "minDay3") return String(daily->temp_min[3], 0).c_str();
+  if (var == "maxDay3") return String(daily->temp_max[3], 0).c_str();
+  if (var == "minDay4") return String(daily->temp_min[4], 0).c_str();
+  if (var == "maxDay4") return String(daily->temp_max[4], 0).c_str();
 
-  if(var == "iconDay1"){
+  if (var == "iconDay1"){
     sprintf(buf, "https://www.rjdekok.nl/icon/%s.bmp",getMeteoconIcon(daily->id[1], false));
     return buf;
   }
-  if(var == "iconDay2"){
+  if (var == "iconDay2"){
     sprintf(buf, "https://www.rjdekok.nl/icon/%s.bmp",getMeteoconIcon(daily->id[2], false));
     return buf;
   }
-  if(var == "iconDay3"){
+  if (var == "iconDay3"){
     sprintf(buf, "https://www.rjdekok.nl/icon/%s.bmp",getMeteoconIcon(daily->id[3], false));
     return buf;
   }
-  if(var == "iconDay4"){
+  if (var == "iconDay4"){
     sprintf(buf, "https://www.rjdekok.nl/icon/%s.bmp",getMeteoconIcon(daily->id[4], false));
     return buf;
   }
 
-  if(var == "40Day") return String(getMufColor("40mtime=day>", 4, true)).c_str();
-  if(var == "40Night") return String(getMufColor("40mtime=night>", 4, true)).c_str();
-  if(var == "20Day") return String(getMufColor("20mtime=day>", 4, true)).c_str();
-  if(var == "20Night") return String(getMufColor("20mtime=night>", 4, true)).c_str();
-  if(var == "15Day") return String(getMufColor("15mtime=day>", 4, true)).c_str();
-  if(var == "15Night") return String(getMufColor("15mtime=night>", 4, true)).c_str();
-  if(var == "10Day") return String(getMufColor("10mtime=day>", 4, true)).c_str();
-  if(var == "10Night") return String(getMufColor("10mtime=night>", 4, true)).c_str();
-  if(var == "6Skip") return String(getMufColor("_6m>", 6, true)).c_str();
-  if(var == "4Skip") return String(getMufColor("_4m>", 6, true)).c_str();
+  if (var == "40Day") return String(getMufColor("40mtime=day>", 4, true)).c_str();
+  if (var == "40Night") return String(getMufColor("40mtime=night>", 4, true)).c_str();
+  if (var == "20Day") return String(getMufColor("20mtime=day>", 4, true)).c_str();
+  if (var == "20Night") return String(getMufColor("20mtime=night>", 4, true)).c_str();
+  if (var == "15Day") return String(getMufColor("15mtime=day>", 4, true)).c_str();
+  if (var == "15Night") return String(getMufColor("15mtime=night>", 4, true)).c_str();
+  if (var == "10Day") return String(getMufColor("10mtime=day>", 4, true)).c_str();
+  if (var == "10Night") return String(getMufColor("10mtime=night>", 4, true)).c_str();
+  if (var == "6Skip") return String(getMufColor("_6m>", 6, true)).c_str();
+  if (var == "4Skip") return String(getMufColor("_4m>", 6, true)).c_str();
 
-  if(var == "IAP") return lastIAP.c_str();
-  if(var == "100km") return contentStrings[7].c_str();
-  if(var == "200km") return contentStrings[6].c_str();
-  if(var == "400km") return contentStrings[5].c_str();
-  if(var == "600km") return contentStrings[4].c_str();  
-  if(var == "800km") return contentStrings[3].c_str();
-  if(var == "1000km") return contentStrings[2].c_str();
-  if(var == "1500km") return contentStrings[1].c_str();
-  if(var == "3000km") return contentStrings[0].c_str();   
+  if (var == "IAP") return lastIAP.c_str();
+  if (var == "100km") return contentStrings[7].c_str();
+  if (var == "200km") return contentStrings[6].c_str();
+  if (var == "400km") return contentStrings[5].c_str();
+  if (var == "600km") return contentStrings[4].c_str();  
+  if (var == "800km") return contentStrings[3].c_str();
+  if (var == "1000km") return contentStrings[2].c_str();
+  if (var == "1500km") return contentStrings[1].c_str();
+  if (var == "3000km") return contentStrings[0].c_str();   
   return var;
+}
+
+String WebLocationList(){
+  char buf[100];
+  String s = "<select name=\"locationsList\" id=\"locationsList\" onchange=\"changeActualLocation()\">";
+  for (int i = 0;i<6;i++){
+    sprintf(buf,"<option value=\"%d\"%s>%02d: %s</option>", i,(settings.actualWeatherStation==i)?" selected ":"",i, weatherStation[i].name);
+    s += String(buf);
+  }
+  s += "</select>";
+  s.replace("%","&#37"); //
+  return s;
 }
 
 /***************************************************************************************

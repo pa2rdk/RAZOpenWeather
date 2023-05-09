@@ -152,42 +152,42 @@ const char index_html[] PROGMEM = R"rawliteral(
         </tr>
         <tr style="color:white">
             <td colspan="2">
-                Min Max
+                Max Min
             </td>
             <td colspan="2">
-                Min Max
+                Max Min
             </td>
             <td colspan="2">
-                Min Max
+                Max Min
             </td>
             <td colspan="2">
-                Min Max
+                Max Min
             </td>
         </tr>
         <tr style="color:red">
             <td>
-                %minDay1%&#176;C
+              %maxDay1%&#176;C
             </td>
             <td>
-                %maxDay1%&#176;C
+              %minDay1%&#176;C
             </td>
             <td>
-                %minDay2%&#176;C
+              %maxDay2%&#176;C
             </td>
             <td>
-                %maxDay2%&#176;C
+              %minDay2%&#176;C
             </td>
             <td>
-                %minDay3%&#176;C
+              %maxDay3%&#176;C
             </td>
             <td>
-                %maxDay3%&#176;C
+              %minDay3%&#176;C
             </td>
             <td>
-                %minDay4%&#176;C
+              %maxDay4%&#176;C
             </td>
             <td>
-                %maxDay4%&#176;C
+              %minDay4%&#176;C
             </td>
         </tr>
         <tr>
@@ -322,6 +322,7 @@ const char index_html[] PROGMEM = R"rawliteral(
             <h4>PI4RAZ</h4>
           </td>
           <td style="text-align:right;">
+            <span id="stationList">%locationList%</span>
             <a href="/settings"><button class="button">Settings</button></a>
             <a href="/reboot"><button class="button">Reboot</button></a>
           </td>
@@ -329,6 +330,15 @@ const char index_html[] PROGMEM = R"rawliteral(
     </table>
   </div>
 </body>
+
+<script>
+  // alert("Oliebol");
+
+  function changeActualLocation(){
+    var e = document.getElementById("locationsList");
+    window.location.href = "/golocation?location="+e.value.toString();
+  }
+  </script>
 </html>
 )rawliteral";
 
@@ -509,7 +519,18 @@ const char settings_html[] PROGMEM = R"rawliteral(
 
           <tr>
             <td style="text-align:right;font-size: medium; color: white">
-              City1/Lat/Lon:: 
+              Actual weatherstation: 
+            </td>
+            <td style="text-align:left;font-size: medium;">
+              <input type="text" name="actualWeatherStation" value="%actualWeatherStation%">
+              0 = Noordpool, 1 = Zuidpool
+            </td>
+
+          </tr>
+
+          <tr>
+            <td style="text-align:right;font-size: medium; color: white">
+              City2/Lat/Lon: 
             </td>
             <td style="text-align:left;font-size: medium;">
               <input type="text" name="city1" value="%city1%">
@@ -520,7 +541,7 @@ const char settings_html[] PROGMEM = R"rawliteral(
 
           <tr>
             <td style="text-align:right;font-size: medium; color: white">
-              City2/Lat/Lon:: 
+              City3/Lat/Lon:
             </td>
             <td style="text-align:left;font-size: medium;">
               <input type="text" name="city2" value="%city2%">
@@ -531,7 +552,7 @@ const char settings_html[] PROGMEM = R"rawliteral(
 
           <tr>
             <td style="text-align:right;font-size: medium; color: white">
-              City3/Lat/Lon:: 
+              City4/Lat/Lon:
             </td>
             <td style="text-align:left;font-size: medium;">
               <input type="text" name="city3" value="%city3%">
@@ -542,7 +563,7 @@ const char settings_html[] PROGMEM = R"rawliteral(
 
           <tr>
             <td style="text-align:right;font-size: medium; color: white">
-              City4/Lat/Lon:: 
+              City5/Lat/Lon:
             </td>
             <td style="text-align:left;font-size: medium;">
               <input type="text" name="city4" value="%city4%">
