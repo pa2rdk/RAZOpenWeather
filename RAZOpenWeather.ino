@@ -1,4 +1,5 @@
 // *************************************************************************************
+//  V2.0.2  10-05-23 Tel. nr. longer and adjustments from Henny.
 //  V2.0.1  09-05-23 Select location online
 //  V2.0.0  01-05-23 Websettings
 //  V1.8.6  13-01-23 Webpage added
@@ -150,7 +151,7 @@ typedef struct {
   char mqttSubject[25];
   int mqttPort;
   bool useWapp;
-  char wappPhone[12];
+  char wappPhone[15];
   char wappAPI[35];
   int wappInterval;
   bool serialMessages;
@@ -583,7 +584,7 @@ void updateWeather() {
     Serial.println("Failed to get weather");
   }
 
-  if (settings.hasLocalTempSensor) LocalTemp();
+  if (settings.hasLocalTempSensor) PrintLocalTemp();
 
   // Delete to free up space
   // delete current;
@@ -976,15 +977,13 @@ if (settings.serialMessages){
     String sus = "Sunset              : "  + String(strDate(current->sunset)) + String(char(13)) + String(char(10));
     tot = loc + tim + mai + tem + hum + pre + win + wdi + clo + sur + sus;
     if (settings.hasLocalTempSensor){
-      float tempC;
-      sensors.requestTemperatures();
-      tempC = sensors.getTempC(Probe01);
+      float tempC = GetLocalTemp();
       String lot;
       if (tempC == -127.00) {
-      lot = "Local Temp      : Error"  + String(char(13)) + String(char(10)); 
+        lot = "Local Temp      : Error"  + String(char(13)) + String(char(10)); 
       }
       else {
-      lot = "Local Temp      : "  + String(tempC,1) + " oC" + String(char(13)) + String(char(10)); 
+        lot = "Local Temp      : "  + String(tempC,1) + " oC" + String(char(13)) + String(char(10)); 
       }
       tot = tot + lot;
     }
@@ -1661,10 +1660,14 @@ void sendMessagetoWHATSAPP(String message) { // Send message to WHATSAPP
   http.end();
 }
 
-void LocalTemp() {
-  float tempL;
+float GetLocalTemp(){
   sensors.requestTemperatures();
-  tempL = sensors.getTempC(Probe01);
+  //tempL = sensors.getTempC(Probe01);
+  return sensors.getTempCByIndex(0);   //PA3HK 
+}
+
+void PrintLocalTemp() {
+  float tempL = GetLocalTemp();
   tft.loadFont(AA_FONT_SMALL);
   tft.setCursor(180, 15);
   tft.setTextColor(TFT_ORANGE, TFT_BLACK);

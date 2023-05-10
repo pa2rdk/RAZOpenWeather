@@ -1,5 +1,5 @@
 Settings settings = {
-    '+',                                //chkDigit
+    '=',                                //chkDigit
     "YourSSID",                         //wifiSSID[25];
     "YourWiFiPass!",                    //wifiPass[25];   
     "your openWether API key here",     //openWeatherAPI;
@@ -10,7 +10,7 @@ Settings settings = {
     "weatherStation/",                  //mqttSubject;  
     1883,                               //mqttPort; 
     0,                                  //useWapp;
-    "0612345678",                       //wappPhone;
+    "+31612345678",                       //wappPhone;
     "your WhatsAppAPI key here",        //wappAPI;
     900,                                //wappInterval;
     1,                                  //serialMessages;
