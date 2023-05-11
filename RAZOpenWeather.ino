@@ -1,4 +1,5 @@
 // *************************************************************************************
+//  V2.0.3  11-05-23 Int. tempsensor automatic enabled and placed on website.
 //  V2.0.2  10-05-23 Tel. nr. longer and adjustments from Henny.
 //  V2.0.1  09-05-23 Select location online
 //  V2.0.0  01-05-23 Websettings
@@ -253,6 +254,8 @@ void setup() {
   }
   LoadConfig();
   LoadWeatherLocations();
+  settings.hasLocalTempSensor = (GetLocalTemp()>-50);
+  Serial.printf("Local temp enabled:%s",settings.hasLocalTempSensor?"yes":"no");
 
   unsigned long timeout = millis();
   bool timedOut = false;
@@ -1768,7 +1771,7 @@ void PrintConfig(){
 }
 
 String processor(const String& var){
-  char buf[100];
+  char buf[150];
   if (var == "wifiSSID") return settings.wifiSSID;
   if (var == "wifiPass") return settings.wifiPass;
   if (var == "openWeatherAPI") return settings.openWeatherAPI;
@@ -1812,6 +1815,13 @@ String processor(const String& var){
   if (var == "sunrise") return strDate(current->sunrise).c_str();
   if (var == "sunset") return strDate(current->sunset).c_str();
   if (var == "main") return current->main.c_str();
+  if (var == "localTemp" && settings.hasLocalTempSensor){
+    float tempC = GetLocalTemp();
+    Serial.println(tempC);
+    sprintf(buf, "<tr><td class=\"myRight\">Local temp:</td><td class=\"myLeft\">%.2f&#176;C</td><td class=\"myLeft\"></td></tr>",tempC);
+    Serial.println(buf);
+    return buf;
+  }
   if (var == "temp") return (String(current->temp)).c_str();
   if (var == "humidity") return (String(current->humidity) + "&#37;").c_str();
   if (var == "pressure") return (String(current->pressure,0) + " hPa").c_str();
@@ -1897,7 +1907,6 @@ String processor(const String& var){
     sprintf(buf, "https://www.rjdekok.nl/icon/%s.bmp",getMeteoconIcon(daily->id[4], false));
     return buf;
   }
-
   if (var == "40Day") return String(getMufColor("40mtime=day>", 4, true)).c_str();
   if (var == "40Night") return String(getMufColor("40mtime=night>", 4, true)).c_str();
   if (var == "20Day") return String(getMufColor("20mtime=day>", 4, true)).c_str();

@@ -73,6 +73,8 @@ const char index_html[] PROGMEM = R"rawliteral(
             </td>
         </tr>
 
+        %localTemp%
+
         <tr>
             <td class="myRight">
                 Humidity:
@@ -490,14 +492,14 @@ const char settings_html[] PROGMEM = R"rawliteral(
             </td>
           </tr>
 
-          <tr>
-            <td style="text-align:right;font-size: medium;">
-              Has local temperture sensor:
-            </td>
-            <td style="text-align:left;font-size: medium;">
-              <input type="checkbox" name="hasLocalTempSensor" value="hasLocalTempSensor" %hasLocalTempSensor%>
-            </td>
-          </tr>
+          <!-- // <tr>
+          //   <td style="text-align:right;font-size: medium;">
+          //     Has local temperture sensor:
+          //   </td>
+          //   <td style="text-align:left;font-size: medium;">
+          //     <input type="checkbox" name="hasLocalTempSensor" value="hasLocalTempSensor" %hasLocalTempSensor%>
+          //   </td>
+          // </tr> -->
 
           <tr>
             <td style="text-align:right;font-size: medium; color: white">
