@@ -52,5 +52,5 @@ const String shortDOW [8]   = {"???", "Zon", "Maa", "Din", "Woe", "Don", "Vrij",
 const char sunStr[]         = "Zon";
 const char cloudStr[]       = "Bewolking";
 const char humidityStr[]    = "Vochtigheid";
-const String moonPhase [13] = {"Nieuw", "Wassend", "Eerste kwrt", "Wassend", "Vol", "Afnemend", "Laatste kwrt", "Afnemend"};
+const String moonPhase[8]  = {"Nieuw", "Wassend", "Eerste kwrt", "Wassend", "Vol", "Afnemend", "Laatste kwrt", "Afnemend"};
 const String winddir[8]     = {"N", "NO", "O", "ZO", "Z", "ZW", "W", "NW" };

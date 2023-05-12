@@ -1,4 +1,5 @@
 // *************************************************************************************
+//  V2.0.4  11-05-23 Bug with useWapp and moontext
 //  V2.0.3  11-05-23 Int. tempsensor automatic enabled and placed on website.
 //  V2.0.2  10-05-23 Tel. nr. longer and adjustments from Henny.
 //  V2.0.1  09-05-23 Select location online
@@ -37,7 +38,7 @@
 //                  deleted clear instructions line 228- 246
 //                  Changed line 264, draw string into "Get weather data...."
 //  V1.3 22-08-2020 Change windspeed from m/s to Baufort.
-//  V1.2 21-07-2020 All_Settings.h moonPhase [8] changed to moonPhase [13]
+//  V1.2 21-07-2020 All_Settings.h moonPhase[8] changed to moonPhase[13]
 //  V1.1 07-07-2020 Led display swithed on for ESP8266 E12
 //
 //  In this sketch we use the sketch of Peter DD6USB to obtain and display the propagation data.
@@ -772,8 +773,8 @@ void drawAstronomy() {
   uint8_t  d = day(local_time);
   uint8_t  h = hour(local_time);
   int      ip;
-  uint8_t icon = moon_phase(y, m, d, h, &ip);
 
+  uint8_t icon = moon_phase(y, m, d, h, &ip);
 
   tft.setTextDatum(TC_DATUM);
   tft.setTextPadding(tft.textWidth("1234567890123")); // Max string length?
@@ -1781,7 +1782,7 @@ String processor(const String& var){
   if (var == "mqttPass") return settings.mqttPass;
   if (var == "mqttSubject") return settings.mqttSubject;
   if (var == "mqttPort") return String(settings.mqttPort);
-  if (var == "useWAPP") return settings.useWapp?"checked":"";
+  if (var == "useWapp") return settings.useWapp?"checked":"";
   if (var == "wappPhone") return settings.wappPhone;
   if (var == "wappAPI") return settings.wappAPI;
   if (var == "wappInterval") return String(settings.wappInterval);
@@ -1847,11 +1848,8 @@ String processor(const String& var){
     uint8_t  h = hour(local_time);
     int      ip;
     uint8_t icon = moon_phase(y, m, d, h, &ip); 
-
-    if (var == "moonText"){
-      sprintf(buf, "%s",moonPhase[ip]);
-      return buf;
-    }
+    Serial.printf("Moonphase:%d\r\n",ip);
+    if (var == "moonText") return moonPhase[ip];
     if (var == "moonIcon"){
       sprintf(buf, "https://www.rjdekok.nl/moon/moonphase_L%s.bmp",String(icon));
       return buf;
