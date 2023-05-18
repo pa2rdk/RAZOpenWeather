@@ -1,4 +1,5 @@
 // *************************************************************************************
+//  V2.0.5  18-05-23 Eliminated the usage of external images, use them from SPIFFS
 //  V2.0.4  11-05-23 Bug with useWapp and moontext
 //  V2.0.3  11-05-23 Int. tempsensor automatic enabled and placed on website.
 //  V2.0.2  10-05-23 Tel. nr. longer and adjustments from Henny.
@@ -338,6 +339,12 @@ void setup() {
 
   server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(200, "text/css", css_html);
+  });
+
+   server.on("/plaatje", HTTP_GET, [](AsyncWebServerRequest *request){
+     //"/43b4.png"
+     if (request->hasParam("image")) request->getParam("image")->value();
+    request->send(SPIFFS, request->getParam("image")->value(), "image/png");
   });
 
   server.on("/reboot", HTTP_GET, [] (AsyncWebServerRequest *request) {
@@ -1830,13 +1837,13 @@ String processor(const String& var){
   if (var == "wind_deg") return winddir[calcWindAngle(current->wind_deg)].c_str();
   if (var == "clouds") return (String(current->clouds) + "&#37;").c_str();
   if (var == "weatherIcon"){
-    sprintf(buf, "https://www.rjdekok.nl/icon/%s.bmp",getMeteoconIcon(current->id, true));
+    sprintf(buf, "plaatje?image=/icon/%s.bmp",getMeteoconIcon(current->id, true));
     return buf;
   }
   if (var == "wind_degIcon"){
     int windAngle = calcWindAngle(current->wind_deg);
     String wind[] = {"N", "NE", "E", "SE", "S", "SW", "W", "NW" };
-    sprintf(buf, "https://www.rjdekok.nl/wind/%s.bmp",wind[windAngle]);
+    sprintf(buf, "plaatje?image=/wind/%s.bmp",wind[windAngle]);
     return buf;
   }
 
@@ -1851,7 +1858,7 @@ String processor(const String& var){
     Serial.printf("Moonphase:%d\r\n",ip);
     if (var == "moonText") return moonPhase[ip];
     if (var == "moonIcon"){
-      sprintf(buf, "https://www.rjdekok.nl/moon/moonphase_L%s.bmp",String(icon));
+      sprintf(buf, "plaatje?image=/moon/moonphase_L%s.bmp",String(icon));
       return buf;
     }
     return "";
@@ -1890,19 +1897,19 @@ String processor(const String& var){
   if (var == "maxDay4") return String(daily->temp_max[4], 0).c_str();
 
   if (var == "iconDay1"){
-    sprintf(buf, "https://www.rjdekok.nl/icon/%s.bmp",getMeteoconIcon(daily->id[1], false));
+    sprintf(buf, "plaatje?image=/icon/%s.bmp",getMeteoconIcon(daily->id[1], false));
     return buf;
   }
   if (var == "iconDay2"){
-    sprintf(buf, "https://www.rjdekok.nl/icon/%s.bmp",getMeteoconIcon(daily->id[2], false));
+    sprintf(buf, "plaatje?image=/icon/%s.bmp",getMeteoconIcon(daily->id[2], false));
     return buf;
   }
   if (var == "iconDay3"){
-    sprintf(buf, "https://www.rjdekok.nl/icon/%s.bmp",getMeteoconIcon(daily->id[3], false));
+    sprintf(buf, "plaatje?image=/icon/%s.bmp",getMeteoconIcon(daily->id[3], false));
     return buf;
   }
   if (var == "iconDay4"){
-    sprintf(buf, "https://www.rjdekok.nl/icon/%s.bmp",getMeteoconIcon(daily->id[4], false));
+    sprintf(buf, "plaatje?image=/icon/%s.bmp",getMeteoconIcon(daily->id[4], false));
     return buf;
   }
   if (var == "40Day") return String(getMufColor("40mtime=day>", 4, true)).c_str();
