@@ -86,7 +86,6 @@ WiFiMulti wifiMulti;
 #include <EEPROM.h>
 #include <WiFiClientSecure.h>
 #include <WiFiUdp.h>
-#include <TFT_eSPI.h>
 #include <UrlEncode.h>
 //#include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
