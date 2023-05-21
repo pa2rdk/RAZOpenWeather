@@ -21,10 +21,8 @@ const char index_html[] PROGMEM = R"rawliteral(
             <td class="myRight">
                 Date:
             </td>
-            <td class="myLeft">
+            <td class="myLeft" colspan="2">
                 %dt%
-            </td>
-            <td>
             </td>
         </tr>
 
@@ -32,10 +30,8 @@ const char index_html[] PROGMEM = R"rawliteral(
             <td class="myRight">
                 Sunrise:
             </td>
-            <td class="myLeft">
+            <td class="myLeft" colspan="2">
                 %sunrise%
-            </td>
-            <td class="myLeft">
             </td>
         </tr>
 
@@ -43,10 +39,8 @@ const char index_html[] PROGMEM = R"rawliteral(
             <td class="myRight">
                 Sunset:
             </td>
-            <td class="myLeft">
+            <td class="myLeft" colspan="2">
                 %sunset%
-            </td>
-            <td class="myLeft">
             </td>
         </tr>
 
@@ -66,10 +60,8 @@ const char index_html[] PROGMEM = R"rawliteral(
             <td class="myRight">
                 Temp:
             </td>
-            <td class="myLeft">
+            <td class="myLeft" colspan="2">
                 %temp%&#176;C
-            </td>
-            <td class="myLeft">
             </td>
         </tr>
 
@@ -79,10 +71,8 @@ const char index_html[] PROGMEM = R"rawliteral(
             <td class="myRight">
                 Humidity:
             </td>
-            <td class="myLeft">
+            <td class="myLeft" colspan="2">
                 %humidity%
-            </td>
-            <td class="myLeft">
             </td>
         </tr>
 
@@ -90,10 +80,8 @@ const char index_html[] PROGMEM = R"rawliteral(
             <td class="myRight">
                 Pressure:
             </td>
-            <td class="myLeft">
+            <td class="myLeft" colspan="2">
                 %pressure%
-            </td>
-            <td class="myLeft">
             </td>
         </tr>
 
@@ -113,10 +101,8 @@ const char index_html[] PROGMEM = R"rawliteral(
             <td class="myRight">
                 Clouds:
             </td>
-            <td class="myLeft">
+            <td class="myLeft" colspan="2">
                 %clouds%
-            </td>
-            <td class="myLeft">
             </td>
         </tr>
 

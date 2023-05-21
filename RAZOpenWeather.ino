@@ -1,4 +1,5 @@
 // *************************************************************************************
+//  V2.0.6  21-05-23 Vertical layout of webpage repaired for phone
 //  V2.0.5  18-05-23 Eliminated the usage of external images, use them from SPIFFS
 //  V2.0.4  11-05-23 Bug with useWapp and moontext
 //  V2.0.3  11-05-23 Int. tempsensor automatic enabled and placed on website.
@@ -1825,7 +1826,7 @@ String processor(const String& var){
   if (var == "localTemp" && settings.hasLocalTempSensor){
     float tempC = GetLocalTemp();
     Serial.println(tempC);
-    sprintf(buf, "<tr><td class=\"myRight\">Local temp:</td><td class=\"myLeft\">%.2f&#176;C</td><td class=\"myLeft\"></td></tr>",tempC);
+    sprintf(buf, "<tr><td class=\"myRight\">Inhouse:</td><td class=\"myLeft\">%.2f&#176;C</td><td class=\"myLeft\"></td></tr>",tempC);
     Serial.println(buf);
     return buf;
   }
