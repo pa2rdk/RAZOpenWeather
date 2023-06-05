@@ -3,7 +3,7 @@ Settings settings = {
     "YourSSID",                         //wifiSSID[25];
     "YourWiFiPass!",                    //wifiPass[25];   
     "your openWether API key here",     //openWeatherAPI;
-    1,                                  //useMQTT                       
+    0,                                  //useMQTT                       
     "mqtt.xxxx.nl",                     //mqttBroker;
     "MQTTUser",                         //mqttUser; 
     "MQTTPass",                         //mqttPass;

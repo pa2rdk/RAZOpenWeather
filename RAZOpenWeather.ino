@@ -190,7 +190,8 @@ typedef struct {  // WiFi Access
 } wlanSSID;
 
 // check All_Settings.h for adapting to your needs
-#include "RDK_Settings.h";                  // Change to All_Settings.h
+// #include "RDK_Settings.h";
+#include "All_Settings.h";
 
 const int nrOffLocations = (sizeof weatherStation / sizeof (WeatherStation)) - 1;
 
