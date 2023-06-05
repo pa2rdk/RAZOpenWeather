@@ -1,4 +1,5 @@
 // *************************************************************************************
+//  V2.0.7  05-06-23 Show IP address
 //  V2.0.6  21-05-23 Vertical layout of webpage repaired for phone
 //  V2.0.5  18-05-23 Eliminated the usage of external images, use them from SPIFFS
 //  V2.0.4  11-05-23 Bug with useWapp and moontext
@@ -318,7 +319,12 @@ void setup() {
     String SSID = WiFi.SSID();
     char ssid[SSID.length() + 1];
     SSID.toCharArray(ssid, SSID.length() + 1);
+
+    char ipNo[16];
+    sprintf(ipNo, "%d.%d.%d.%d", WiFi.localIP()[0], WiFi.localIP()[1], WiFi.localIP()[2], WiFi.localIP()[3]);
+
     messageBox(ssid, TFT_GREEN, TFT_NAVY);
+    messageBox(ipNo, TFT_GREEN, TFT_NAVY, 5, 280, 230, 24);
   } else {
     messageBox("Connect to RAZWeather", TFT_GREEN, TFT_NAVY);
     WiFi.mode(WIFI_AP);
