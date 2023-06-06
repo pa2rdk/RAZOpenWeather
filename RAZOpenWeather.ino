@@ -1,4 +1,7 @@
 // *************************************************************************************
+//  V2.0.7  06-06-23 Settings page fits on phone
+//                   Auto refres after selecting other location in browser
+//                   Forecast from today          
 //  V2.0.7  05-06-23 Show IP address
 //  V2.0.6  21-05-23 Vertical layout of webpage repaired for phone
 //  V2.0.5  18-05-23 Eliminated the usage of external images, use them from SPIFFS
@@ -9,7 +12,7 @@
 //  V2.0.0  01-05-23 Websettings
 //  V1.8.6  13-01-23 Webpage added
 //  V1.8.5  05-12-22 Local temperature added
-//  V1.8.4  01-12-22 Possibilty to send weather report via Whatsapp added.
+//  V1.8.4  01-12-22 Possibility to send weather report via Whatsapp added.
 //  V1.8.3  15-11-22 Add multiple splashscreen en variabele pageDelay welke bepaalt hoelang een sub scherm getoond wordt
 //  V1.8.2b 15-11-22 Override en gebruik van de messagebox voorde locationlist,
 //  V1.8.2a 15-11-22 PA2HGJ changes
@@ -370,7 +373,7 @@ void setup() {
   server.on("/golocation", HTTP_GET, [] (AsyncWebServerRequest *request) {
     if (request->hasParam("location")) settings.actualWeatherStation = request->getParam("location")->value().toInt();
     printConfig=true;
-    request->send_P(200, "text/html", index_html, processor);
+    request->send_P(200, "text/html", refresh_html, processor);
   });
 
   server.begin();
@@ -495,7 +498,7 @@ void handlePages(int pageNr) {
   Serial.print("Handle page:");
   Serial.println(pageNr);
 
-  if (pageNr == 0) WiFi.mode(WIFI_AP_STA);
+  //if (pageNr == 0) WiFi.mode(WIFI_AP_STA);
   while (wifiMulti.run() != WL_CONNECTED) {
     delay(1000);
     Serial.print(".");
@@ -735,7 +738,7 @@ int calcWindAngle(uint16_t windDeg) {
 ***************************************************************************************/
 // draws the three forecast columns
 void drawForecast() {
-  int8_t dayIndex = 1;
+  int8_t dayIndex = 0;
 
   drawForecastDetail(  8, 171, dayIndex++);
   drawForecastDetail( 66, 171, dayIndex++); // was 95
@@ -1871,52 +1874,52 @@ String processor(const String& var){
     return "";
   }
   if (var == "forcastDay1"){
-    String day  = shortDOW[weekday(TIMEZONE.toLocal(daily->dt[1], &tz1_Code))];
+    String day  = shortDOW[weekday(TIMEZONE.toLocal(daily->dt[0], &tz1_Code))];
     day.toUpperCase();
     sprintf(buf, "%s",day);
     return buf;
   }
   if (var == "forcastDay2"){
-    String day  = shortDOW[weekday(TIMEZONE.toLocal(daily->dt[2], &tz1_Code))];
+    String day  = shortDOW[weekday(TIMEZONE.toLocal(daily->dt[1], &tz1_Code))];
     day.toUpperCase();
     sprintf(buf, "%s",day);
     return buf;
   }
   if (var == "forcastDay3"){
-    String day  = shortDOW[weekday(TIMEZONE.toLocal(daily->dt[3], &tz1_Code))];
+    String day  = shortDOW[weekday(TIMEZONE.toLocal(daily->dt[2], &tz1_Code))];
     day.toUpperCase();
     sprintf(buf, "%s",day);
     return buf;
   }
   if (var == "forcastDay4"){
-    String day  = shortDOW[weekday(TIMEZONE.toLocal(daily->dt[4], &tz1_Code))];
+    String day  = shortDOW[weekday(TIMEZONE.toLocal(daily->dt[3], &tz1_Code))];
     day.toUpperCase();
     sprintf(buf, "%s",day);
     return buf;
   }
-  if (var == "minDay1") return String(daily->temp_min[1], 0).c_str();
-  if (var == "maxDay1") return String(daily->temp_max[1], 0).c_str();
-  if (var == "minDay2") return String(daily->temp_min[2], 0).c_str();
-  if (var == "maxDay2") return String(daily->temp_max[2], 0).c_str();
-  if (var == "minDay3") return String(daily->temp_min[3], 0).c_str();
-  if (var == "maxDay3") return String(daily->temp_max[3], 0).c_str();
-  if (var == "minDay4") return String(daily->temp_min[4], 0).c_str();
-  if (var == "maxDay4") return String(daily->temp_max[4], 0).c_str();
+  if (var == "minDay1") return String(daily->temp_min[0], 0).c_str();
+  if (var == "maxDay1") return String(daily->temp_max[0], 0).c_str();
+  if (var == "minDay2") return String(daily->temp_min[1], 0).c_str();
+  if (var == "maxDay2") return String(daily->temp_max[1], 0).c_str();
+  if (var == "minDay3") return String(daily->temp_min[2], 0).c_str();
+  if (var == "maxDay3") return String(daily->temp_max[2], 0).c_str();
+  if (var == "minDay4") return String(daily->temp_min[3], 0).c_str();
+  if (var == "maxDay4") return String(daily->temp_max[3], 0).c_str();
 
   if (var == "iconDay1"){
-    sprintf(buf, "plaatje?image=/icon/%s.bmp",getMeteoconIcon(daily->id[1], false));
+    sprintf(buf, "plaatje?image=/icon/%s.bmp",getMeteoconIcon(daily->id[0], false));
     return buf;
   }
   if (var == "iconDay2"){
-    sprintf(buf, "plaatje?image=/icon/%s.bmp",getMeteoconIcon(daily->id[2], false));
+    sprintf(buf, "plaatje?image=/icon/%s.bmp",getMeteoconIcon(daily->id[1], false));
     return buf;
   }
   if (var == "iconDay3"){
-    sprintf(buf, "plaatje?image=/icon/%s.bmp",getMeteoconIcon(daily->id[3], false));
+    sprintf(buf, "plaatje?image=/icon/%s.bmp",getMeteoconIcon(daily->id[2], false));
     return buf;
   }
   if (var == "iconDay4"){
-    sprintf(buf, "plaatje?image=/icon/%s.bmp",getMeteoconIcon(daily->id[4], false));
+    sprintf(buf, "plaatje?image=/icon/%s.bmp",getMeteoconIcon(daily->id[3], false));
     return buf;
   }
   if (var == "40Day") return String(getMufColor("40mtime=day>", 4, true)).c_str();

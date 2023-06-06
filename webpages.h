@@ -320,13 +320,37 @@ const char index_html[] PROGMEM = R"rawliteral(
 </body>
 
 <script>
-  // alert("Oliebol");
-
   function changeActualLocation(){
     var e = document.getElementById("locationsList");
     window.location.href = "/golocation?location="+e.value.toString();
   }
-  </script>
+</script>
+</html>
+)rawliteral";
+
+const char refresh_html[] PROGMEM = R"rawliteral(
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Weather server %location%</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- <meta http-equiv="refresh" content="1">  -->
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+  <div class="topnav">
+    <h1>Weather Server</h1><br>
+    <h2>Wait for refresh!</h2>
+  </div>
+  <hr>
+</body>
+
+<script>
+  setTimeout(function(){
+   window.location.href = "/"
+  }, 5000);
+</script>
 </html>
 )rawliteral";
 
@@ -362,7 +386,7 @@ const char settings_html[] PROGMEM = R"rawliteral(
           </tr>
 
           <tr>
-            <td style="text-align:right;font-size: medium; color: white">
+            <td style="text-align:right;font-size: medium; color: white" word-wrap: break-word>
               WiFi Password:
             </td>
             <td style="text-align:left;font-size: medium;">
@@ -372,11 +396,18 @@ const char settings_html[] PROGMEM = R"rawliteral(
 
           <tr>
             <td style="text-align:right;font-size: medium; color: white">
-              OpenWeather APIkey: 
+              OpenWeather 
             </td>
-            <td style="text-align:left;font-size: medium;">
+            <td style="text-align:left;font-size: medium;" rowspan="2">
               <input type="text" name="openWeatherAPI" value="%openWeatherAPI%">
             </td>
+          </tr>
+
+          <tr>
+            <td style="text-align:right;font-size: medium; color: white">
+              APIkey: 
+            </td>
+            <td></td>
           </tr>
 
           <tr>
@@ -435,20 +466,34 @@ const char settings_html[] PROGMEM = R"rawliteral(
 
           <tr>
             <td style="text-align:right;font-size: medium;">
-              Enable WhatsApp:
+              Enable
             </td>
-            <td style="text-align:left;font-size: medium;">
+            <td style="text-align:left;font-size: medium;" rowspan="2">
               <input type="checkbox" name="useWapp" value="useWapp" %useWapp%>
             </td>
           </tr>
 
           <tr>
-            <td style="text-align:right;font-size: medium; color: white">
-              WAPP PhoneNumber: 
+            <td style="text-align:right;font-size: medium;">
+              WhatsApp:
             </td>
-            <td style="text-align:left;font-size: medium;">
+            <td></td>
+          </tr>
+
+          <tr>
+            <td style="text-align:right;font-size: medium; color: white">
+              WAPP 
+            </td>
+            <td style="text-align:left;font-size: medium;" rowspan="2">
               <input type="text" name="wappPhone" value="%wappPhone%">
             </td>
+          </tr>
+
+          <tr>
+            <td style="text-align:right;font-size: medium; color: white">
+              PhoneNumber: 
+            </td>
+            <td></td>
           </tr>
 
           <tr>
@@ -507,56 +552,123 @@ const char settings_html[] PROGMEM = R"rawliteral(
 
           <tr>
             <td style="text-align:right;font-size: medium; color: white">
-              Actual weatherstation: 
+              Actual channel: 
             </td>
             <td style="text-align:left;font-size: medium;">
               <input type="text" name="actualWeatherStation" value="%actualWeatherStation%">
+            </td>
+          </tr>
+          <tr>
+            <td style="text-align:left;font-size: medium;" colspan="2">
               0 = Noordpool, 1 = Zuidpool
             </td>
-
           </tr>
 
           <tr>
             <td style="text-align:right;font-size: medium; color: white">
-              City2/Lat/Lon: 
+              City2: 
             </td>
             <td style="text-align:left;font-size: medium;">
               <input type="text" name="city1" value="%city1%">
+            </td>
+          </tr>
+
+          <tr>
+            <td style="text-align:right;font-size: medium; color: white">
+              City2 Lat: 
+            </td>
+            <td style="text-align:left;font-size: medium;">
               <input type="text" name="latitude1" value="%latitude1%">
+            </td>
+          </tr>
+
+          <tr>
+            <td style="text-align:right;font-size: medium; color: white">
+              City2 Lon: 
+            </td>
+            <td style="text-align:left;font-size: medium;">
               <input type="text" name="longitude1" value="%longitude1%">
             </td>
           </tr>
 
           <tr>
             <td style="text-align:right;font-size: medium; color: white">
-              City3/Lat/Lon:
+              City3: 
             </td>
             <td style="text-align:left;font-size: medium;">
-              <input type="text" name="city2" value="%city2%">
-              <input type="text" name="latitude2" value="%latitude2%">
-              <input type="text" name="longitude2" value="%longitude2%">
+              <input type="text" name="city1" value="%city2%">
             </td>
           </tr>
 
           <tr>
             <td style="text-align:right;font-size: medium; color: white">
-              City4/Lat/Lon:
+              City3 Lat: 
             </td>
             <td style="text-align:left;font-size: medium;">
-              <input type="text" name="city3" value="%city3%">
-              <input type="text" name="latitude3" value="%latitude3%">
-              <input type="text" name="longitude3" value="%longitude3%">
+              <input type="text" name="latitude1" value="%latitude2%">
             </td>
           </tr>
 
           <tr>
             <td style="text-align:right;font-size: medium; color: white">
-              City5/Lat/Lon:
+              City3 Lon: 
             </td>
             <td style="text-align:left;font-size: medium;">
-              <input type="text" name="city4" value="%city4%">
-              <input type="text" name="latitude4" value="%latitude4%">
-              <input type="text" name="longitude4" value="%longitude4%">
+              <input type="text" name="longitude1" value="%longitude2%">
+            </td>
+          </tr>
+
+          <tr>
+            <td style="text-align:right;font-size: medium; color: white">
+              City4: 
+            </td>
+            <td style="text-align:left;font-size: medium;">
+              <input type="text" name="city1" value="%city3%">
+            </td>
+          </tr>
+
+          <tr>
+            <td style="text-align:right;font-size: medium; color: white">
+              City4 Lat: 
+            </td>
+            <td style="text-align:left;font-size: medium;">
+              <input type="text" name="latitude1" value="%latitude3%">
+            </td>
+          </tr>
+
+          <tr>
+            <td style="text-align:right;font-size: medium; color: white">
+              City4 Lon: 
+            </td>
+            <td style="text-align:left;font-size: medium;">
+              <input type="text" name="longitude1" value="%longitude3%">
+            </td>
+          </tr>
+
+          <tr>
+            <td style="text-align:right;font-size: medium; color: white">
+              City5: 
+            </td>
+            <td style="text-align:left;font-size: medium;">
+              <input type="text" name="city1" value="%city4%">
+            </td>
+          </tr>
+
+          <tr>
+            <td style="text-align:right;font-size: medium; color: white">
+              City5 Lat: 
+            </td>
+            <td style="text-align:left;font-size: medium;">
+              <input type="text" name="latitude1" value="%latitude4%">
+            </td>
+          </tr>
+
+          <tr>
+            <td style="text-align:right;font-size: medium; color: white">
+              City5 Lon: 
+            </td>
+            <td style="text-align:left;font-size: medium;">
+              <input type="text" name="longitude1" value="%longitude4%">
             </td>
           </tr>
 
