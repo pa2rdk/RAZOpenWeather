@@ -559,7 +559,7 @@ const char settings_html[] PROGMEM = R"rawliteral(
             </td>
           </tr>
           <tr>
-            <td style="text-align:left;font-size: medium;" colspan="2">
+            <td style="text-align:center;font-size: medium;" colspan="2">
               0 = Noordpool, 1 = Zuidpool
             </td>
           </tr>

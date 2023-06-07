@@ -1,6 +1,6 @@
 // *************************************************************************************
-//  V2.0.7  06-06-23 Settings page fits on phone
-//                   Auto refres after selecting other location in browser
+//  V2.0.8  06-06-23 Settings page fits on phone
+//                   Auto refresh after selecting other location in browser
 //                   Forecast from today          
 //  V2.0.7  05-06-23 Show IP address
 //  V2.0.6  21-05-23 Vertical layout of webpage repaired for phone
