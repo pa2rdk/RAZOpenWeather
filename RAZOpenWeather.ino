@@ -1,4 +1,8 @@
 // *************************************************************************************
+//  V2.0.9  08-06-23  - Velden voor lat en kon verlengd van 15 naar 25 chars
+//                    - Reset ingebouwd als bij het opstarten op het scherm wordt gedrukt.
+//                    - Een time-out op de MQTT connectie. Als die na 5 seconden faalt, zet ik de MQTT connectie uit.
+//                    - Foutjes op de settings webpage bij city3, 4 en 5. 
 //  V2.0.8  06-06-23 Settings page fits on phone
 //                   Auto refresh after selecting other location in browser
 //                   Forecast from today          
@@ -168,17 +172,17 @@ typedef struct {
   int pageDelay;
   int actualWeatherStation;
   char city1[25];
-  char latitude1[15];
-  char longitude1[15];
+  char latitude1[25];
+  char longitude1[25];
   char city2[25];
-  char latitude2[15];
-  char longitude2[15];  
+  char latitude2[25];
+  char longitude2[25];  
   char city3[25];
-  char latitude3[15];
-  char longitude3[15];  
+  char latitude3[25];
+  char longitude3[25];  
   char city4[25];
-  char latitude4[15];
-  char longitude4[15];      
+  char latitude4[25];
+  char longitude4[25];      
   bool isDebug;
 } Settings;
 
@@ -194,8 +198,8 @@ typedef struct {  // WiFi Access
 } wlanSSID;
 
 // check All_Settings.h for adapting to your needs
-// #include "RDK_Settings.h";
-#include "All_Settings.h";
+#include "RDK_Settings.h";
+//#include "All_Settings.h";
 
 const int nrOffLocations = (sizeof weatherStation / sizeof (WeatherStation)) - 1;
 
@@ -255,9 +259,13 @@ void setup() {
     calData[4] = 2;
   }
 
-  if (!LoadConfig()){
+  uint16_t touchX = 0, touchY = 0;
+  bool pressed = tft.getTouch(&touchX, &touchY);
+  if (pressed || !LoadConfig()){
     if (settings.isDebug) Serial.println(F("Writing defaults"));
+    messageBox("Reset to default", TFT_WHITE, TFT_NAVY);
     SaveConfig();
+    delay(2000);
   }
   LoadConfig();
   LoadWeatherLocations();
@@ -269,7 +277,7 @@ void setup() {
   tft.setTouch(calData);
 
   locationList(); // Print locations
-  uint16_t touchX = 0, touchY = 0;
+  
   bool showLocList = true;
   while (showLocList) {
     bool pressed = tft.getTouch(&touchX, &touchY);
@@ -1641,7 +1649,8 @@ int getMufColor(String s, int len) {
 bool checkMQTTConnection() {
   if (settings.useMQTT){
     if (!client.connected()) {
-      while (!client.connect("MQTTGateway", settings.mqttUser, settings.mqttPass)) {
+      long startWhile = millis();
+      while (!client.connect("MQTTGateway", settings.mqttUser, settings.mqttPass) && millis()-startWhile<5000) {
         Serial.print("!");
         delay(1000);
       }
@@ -1651,7 +1660,10 @@ bool checkMQTTConnection() {
         Serial.print(F("MQTT connected to: "));
         Serial.println(settings.mqttBroker);
         return true;
-      } else return false;
+      } else {
+        settings.useMQTT = false;
+        return false;
+      } 
     }
   }
 }
@@ -1942,7 +1954,7 @@ String processor(const String& var){
   if (var == "1000km") return contentStrings[2].c_str();
   if (var == "1500km") return contentStrings[1].c_str();
   if (var == "3000km") return contentStrings[0].c_str();   
-  return var;
+  return "";
 }
 
 String WebLocationList(){

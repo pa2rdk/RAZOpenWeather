@@ -375,9 +375,9 @@ const char settings_html[] PROGMEM = R"rawliteral(
       <form action="/store" method="get">
 
       <div class="divinfo">
-        <table>
+        <table class="fwidth">
           <tr>
-            <td style="text-align:right;font-size: medium; color: white">
+            <td style="text-align:right;font-size: medium; color: white" class="hwidth">
               WiFi SSID: 
             </td>
             <td style="text-align:left;font-size: medium;">
@@ -596,7 +596,7 @@ const char settings_html[] PROGMEM = R"rawliteral(
               City3: 
             </td>
             <td style="text-align:left;font-size: medium;">
-              <input type="text" name="city1" value="%city2%">
+              <input type="text" name="city2" value="%city2%">
             </td>
           </tr>
 
@@ -605,7 +605,7 @@ const char settings_html[] PROGMEM = R"rawliteral(
               City3 Lat: 
             </td>
             <td style="text-align:left;font-size: medium;">
-              <input type="text" name="latitude1" value="%latitude2%">
+              <input type="text" name="latitude2" value="%latitude2%">
             </td>
           </tr>
 
@@ -614,7 +614,7 @@ const char settings_html[] PROGMEM = R"rawliteral(
               City3 Lon: 
             </td>
             <td style="text-align:left;font-size: medium;">
-              <input type="text" name="longitude1" value="%longitude2%">
+              <input type="text" name="longitude2" value="%longitude2%">
             </td>
           </tr>
 
@@ -623,7 +623,7 @@ const char settings_html[] PROGMEM = R"rawliteral(
               City4: 
             </td>
             <td style="text-align:left;font-size: medium;">
-              <input type="text" name="city1" value="%city3%">
+              <input type="text" name="city3" value="%city3%">
             </td>
           </tr>
 
@@ -632,7 +632,7 @@ const char settings_html[] PROGMEM = R"rawliteral(
               City4 Lat: 
             </td>
             <td style="text-align:left;font-size: medium;">
-              <input type="text" name="latitude1" value="%latitude3%">
+              <input type="text" name="latitude3" value="%latitude3%">
             </td>
           </tr>
 
@@ -641,7 +641,7 @@ const char settings_html[] PROGMEM = R"rawliteral(
               City4 Lon: 
             </td>
             <td style="text-align:left;font-size: medium;">
-              <input type="text" name="longitude1" value="%longitude3%">
+              <input type="text" name="longitude3" value="%longitude3%">
             </td>
           </tr>
 
@@ -650,7 +650,7 @@ const char settings_html[] PROGMEM = R"rawliteral(
               City5: 
             </td>
             <td style="text-align:left;font-size: medium;">
-              <input type="text" name="city1" value="%city4%">
+              <input type="text" name="city4" value="%city4%">
             </td>
           </tr>
 
@@ -659,7 +659,7 @@ const char settings_html[] PROGMEM = R"rawliteral(
               City5 Lat: 
             </td>
             <td style="text-align:left;font-size: medium;">
-              <input type="text" name="latitude1" value="%latitude4%">
+              <input type="text" name="latitude4" value="%latitude4%">
             </td>
           </tr>
 
@@ -668,7 +668,7 @@ const char settings_html[] PROGMEM = R"rawliteral(
               City5 Lon: 
             </td>
             <td style="text-align:left;font-size: medium;">
-              <input type="text" name="longitude1" value="%longitude4%">
+              <input type="text" name="longitude4" value="%longitude4%">
             </td>
           </tr>
 
@@ -800,6 +800,12 @@ body {
 }
 .reading { 
     font-size: 1.4rem;  
+}
+.fwidth {
+    width: 100%;
+}
+.hwidth {
+    width: 50%;
 }
 })rawliteral";
 
