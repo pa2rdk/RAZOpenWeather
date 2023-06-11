@@ -1,4 +1,5 @@
 // *************************************************************************************
+//  V2.1.0  11-06-23 Settings and reboot prohibited from external
 //  V2.0.9  08-06-23  - Velden voor lat en kon verlengd van 15 naar 25 chars
 //                    - Reset ingebouwd als bij het opstarten op het scherm wordt gedrukt.
 //                    - Een time-out op de MQTT connectie. Als die na 5 seconden faalt, zet ik de MQTT connectie uit.
@@ -352,7 +353,10 @@ void setup() {
   });
 
   server.on("/settings", HTTP_GET, [] (AsyncWebServerRequest *request) {
-    request->send_P(200, "text/html", settings_html, processor);
+    if (request->client()->remoteIP()[0] == 192 || request->client()->remoteIP()[0] == 10 || request->client()->remoteIP()[0] == 172)
+      request->send_P(200, "text/html", settings_html, processor);
+    else
+      request->send_P(200, "text/html", warning_html, processor);
   });
 
   server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -360,22 +364,30 @@ void setup() {
   });
 
    server.on("/plaatje", HTTP_GET, [](AsyncWebServerRequest *request){
-     //"/43b4.png"
-     if (request->hasParam("image")) request->getParam("image")->value();
+    //"/43b4.png"
+    if (request->hasParam("image")) request->getParam("image")->value();
     request->send(SPIFFS, request->getParam("image")->value(), "image/png");
   });
 
   server.on("/reboot", HTTP_GET, [] (AsyncWebServerRequest *request) {
-    request->send(200, "text/plain", "Rebooting");
-    ESP.restart();
+    if (request->client()->remoteIP()[0] == 192 || request->client()->remoteIP()[0] == 10 || request->client()->remoteIP()[0] == 172){
+      request->send(200, "text/plain", "Rebooting");
+      ESP.restart();
+    }
+    else
+      request->send_P(200, "text/html", warning_html, processor);
   });
 
   server.on("/store", HTTP_GET, [] (AsyncWebServerRequest *request) {
-    SaveSettings(request);
-    SaveConfig();
-    LoadWeatherLocations();
-    printConfig=true;
-    request->send_P(200, "text/html", index_html, processor);
+    if (request->client()->remoteIP()[0] == 192 || request->client()->remoteIP()[0] == 10 || request->client()->remoteIP()[0] == 172){
+      SaveSettings(request);
+      SaveConfig();
+      LoadWeatherLocations();
+      printConfig=true;
+      request->send_P(200, "text/html", index_html, processor);
+    }
+    else
+      request->send_P(200, "text/html", warning_html, processor);
   }); 
 
   server.on("/golocation", HTTP_GET, [] (AsyncWebServerRequest *request) {

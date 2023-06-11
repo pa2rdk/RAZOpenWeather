@@ -354,6 +354,32 @@ const char refresh_html[] PROGMEM = R"rawliteral(
 </html>
 )rawliteral";
 
+const char warning_html[] PROGMEM = R"rawliteral(
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Weather server %location%</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- <meta http-equiv="refresh" content="1">  -->
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+  <div class="topnav">
+    <h1>Weather Server</h1><br>
+    <h2>Not allowed from external!</h2>
+  </div>
+  <hr>
+</body>
+
+<script>
+  setTimeout(function(){
+   window.location.href = "/"
+  }, 5000);
+</script>
+</html>
+)rawliteral";
+
 const char settings_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE HTML>
 <html>
