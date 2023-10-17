@@ -83,7 +83,7 @@
 
 // Additional functions
 #include "GfxUi.h"          // Attached to this sketch
-#include "SPIFFS_Support.h" // Attached to this sketch
+#include "SPIFFS.h" // Attached to this sketch
 
 // Multi Wifi added by PA3HK
 #include "soc/soc.h"
@@ -220,9 +220,9 @@ OW_hourly  *hourly;                   // Not used
 OW_daily   *daily;
 
 //Swith LED at display
-#define Display_Led    22 
+#define Display_Led    14 
 #define ONE_WIRE_BUS_PIN 13
-#define displayon      1
+#define displayon      0
 
 OneWire oneWire(ONE_WIRE_BUS_PIN);
 DallasTemperature sensors(&oneWire);
@@ -290,7 +290,7 @@ void setup() {
 
   tft.fillScreen(TFT_BLACK);
   SPIFFS.begin();
-  listFiles();
+  //listFiles();
 
   // Enable if you want to erase SPIFFS, this takes some time!
   // then disable and reload sketch to avoid reformatting on every boot!
@@ -310,7 +310,7 @@ void setup() {
 
   if (font_missing) {
     Serial.println("\r\nFont missing in SPIFFS, did you upload it?");
-    while(1) yield();
+    //while(1) yield();
   }
 
   // add Wi-Fi networks from All_Settings.h
@@ -413,7 +413,7 @@ void setup() {
 
   //tft.unloadFont();
   ow.partialDataSet(true); // Collect a subset of the data available
-  httpsNet.setInsecure();
+  //httpsNet.setInsecure();
   actualPage = 0;
 
   // set the resolution to 10 bit (Can be 9 to 12 bits .. lower is faster)
