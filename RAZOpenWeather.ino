@@ -83,7 +83,7 @@
 
 // Additional functions
 #include "GfxUi.h"          // Attached to this sketch
-#include "SPIFFS.h" // Attached to this sketch
+#include "SPIFFS.h"         // Attached to this sketch
 
 // Multi Wifi added by PA3HK
 #include "soc/soc.h"
@@ -1204,7 +1204,7 @@ void getAndCompressClientData(void) {
   solarBuf = "";                      // clear solarBuf
   String  sbuf = "";
   if (!httpsNet.connect(HAMQSL_HOST, 443)) { //Open Server Connection
-    if (settings.isDebug) Serial.println(F("Connection failed"));
+    if (settings.isDebug) Serial.println(F("\tHAMQSL_HOST Connection failed"));
     return;
   } else {
     if (settings.isDebug) Serial.println(F("\tHAMQSL_HOST is connected now"));
@@ -1404,10 +1404,10 @@ void readIAPData(void) {
   char atom;
   String iapBuf = "";                          //clear iapBuf
   if (!httpsNet.connect(IONIAP_HOST, 443)) {      //Open iap-server Connection
-  if (settings.isDebug) Serial.println(F("Connection failed"));
+  if (settings.isDebug) Serial.println(F("\tIONIAP_HOST Connection failed"));
     return;
   } else {
-    if (settings.isDebug) Serial.println(F("\IONIAP_HOST is connected now"));
+    if (settings.isDebug) Serial.println(F("\tIONIAP_HOST is connected now"));
   }
 
   httpsNet.print(F("GET "));                       // question to net
@@ -1463,10 +1463,10 @@ void readIAPBEData(void) {
   char atom;
   String iapBuf = "";                          //clear iapBuf
   if (!httpNet.connect(IONBE_HOST, 80)) {      //Open iap-server Connection
-  if (settings.isDebug) Serial.println(F("Connection failed"));
+  if (settings.isDebug) Serial.println(F("\tIONBE_HOST Connection failed"));
     return;
   } else {
-    if (settings.isDebug) Serial.println(F("\IONBE_HOST is connected now"));
+    if (settings.isDebug) Serial.println(F("\tIONBE_HOST is connected now"));
   }
 
   httpNet.print(F("GET "));                               // question to net
