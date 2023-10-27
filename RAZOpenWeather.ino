@@ -413,7 +413,7 @@ void setup() {
 
   //tft.unloadFont();
   ow.partialDataSet(true); // Collect a subset of the data available
-  //httpsNet.setInsecure();
+  httpsNet.setInsecure();
   actualPage = 0;
 
   // set the resolution to 10 bit (Can be 9 to 12 bits .. lower is faster)
