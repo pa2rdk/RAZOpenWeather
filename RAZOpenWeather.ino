@@ -1,4 +1,5 @@
 // *************************************************************************************
+//  V2.1.1  16-11-23 Geselecteerde locatie werd niet opgeslagen, display aangepast van 22 naar 14 ivm nieuwe printen
 //  V2.1.0  11-06-23 Settings and reboot prohibited from external
 //  V2.0.9  08-06-23  - Velden voor lat en kon verlengd van 15 naar 25 chars
 //                    - Reset ingebouwd als bij het opstarten op het scherm wordt gedrukt.
@@ -392,6 +393,7 @@ void setup() {
 
   server.on("/golocation", HTTP_GET, [] (AsyncWebServerRequest *request) {
     if (request->hasParam("location")) settings.actualWeatherStation = request->getParam("location")->value().toInt();
+    SaveConfig();
     printConfig=true;
     request->send_P(200, "text/html", refresh_html, processor);
   });
