@@ -1,4 +1,7 @@
 // *************************************************************************************
+//  V2.2.0  26-11-23 Setting wel/niet meesturen symbool in MQTT.
+//                   Refresh pages bij opstarten.
+//                   MQTT connect 3x controleren               
 //  V2.1.1  16-11-23 Geselecteerde locatie werd niet opgeslagen, display aangepast van 22 naar 14 ivm nieuwe printen
 //  V2.1.0  11-06-23 Settings and reboot prohibited from external
 //  V2.0.9  08-06-23  - Velden voor lat en kon verlengd van 15 naar 25 chars
@@ -142,7 +145,7 @@ uint16_t maxWebBytes = 1700;          // max. bytes to read from content
 String solarBuf;                      // to hold the compressed content
 String contentStrings[10];            // holds the IAP data
 String tot;                           // Total string for WHATSAPP
-long lastRefresh = -1;                // Last refresh in millis()
+long lastRefresh = -2;                // Last refresh in millis()
 long lastWHATSAPPRefresh = -1;        // Last WHATSAPPrefresh in millis()
 long lastLocTempRefresh  = -1;        // last LocTempRefresh in millis;
 int EEPROM_ADDRESS = 0;               // EEProm address
@@ -151,6 +154,7 @@ String lastIAP = "";
 long startTime = millis();
 bool apMode = false;
 bool printConfig = false;
+int MQTTFailCounter = 0;
 
 typedef struct {
   byte chkDigit;
@@ -162,6 +166,7 @@ typedef struct {
   char mqttUser[25];
   char mqttPass[25];
   char mqttSubject[25];
+  bool mqttTXUnits;
   int mqttPort;
   bool useWapp;
   char wappPhone[15];
@@ -484,7 +489,7 @@ void loop() {
     printConfig=false;
   }
 
-  if (lastRefresh == -1 || (millis() - lastRefresh > 1000UL * settings.updateInterval)) {
+  if (lastRefresh < 0 || (millis() - lastRefresh > 1000UL * settings.updateInterval)) {
     Serial.println("Refresh page");
     if (lastRefresh != -1) {
       for (int x = actualPage + 1; x <= maxPage; x++) {
@@ -1052,10 +1057,17 @@ if (settings.serialMessages){
       client.publish(String(settings.mqttSubject) + "weather/sunrise", strDate(current->sunrise));
       client.publish(String(settings.mqttSubject) + "weather/sunset", strDate(current->sunset));
       client.publish(String(settings.mqttSubject) + "weather/main", current->main);
-      client.publish(String(settings.mqttSubject) + "weather/temp", String(current->temp) + " C");
-      client.publish(String(settings.mqttSubject) + "weather/humidity", String(current->humidity) + "%");
-      client.publish(String(settings.mqttSubject) + "weather/pressure", String(current->pressure) + " mBar");
-      client.publish(String(settings.mqttSubject) + "weather/wind_speed", windspeedconv(current->wind_speed) + " Bft");
+      if (settings.mqttTXUnits){
+        client.publish(String(settings.mqttSubject) + "weather/temp", String(current->temp) + " C");
+        client.publish(String(settings.mqttSubject) + "weather/humidity", String(current->humidity) + "%");
+        client.publish(String(settings.mqttSubject) + "weather/pressure", String(current->pressure) + " mBar");
+        client.publish(String(settings.mqttSubject) + "weather/wind_speed", windspeedconv(current->wind_speed) + " Bft");
+      } else {
+        client.publish(String(settings.mqttSubject) + "weather/temp", String(current->temp));
+        client.publish(String(settings.mqttSubject) + "weather/humidity", String(current->humidity));
+        client.publish(String(settings.mqttSubject) + "weather/pressure", String(current->pressure));
+        client.publish(String(settings.mqttSubject) + "weather/wind_speed", windspeedconv(current->wind_speed));
+      }
       client.publish(String(settings.mqttSubject) + "weather/wind_dir", winddir[calcWindAngle(current->wind_deg)]);
       //client.publish(String(settings.mqttSubject) + "weather/wind_dir",calcWindDirection(current->wind_deg));
       client.publish(String(settings.mqttSubject) + "weather/clouds", String(current->clouds) + "%");
@@ -1673,9 +1685,11 @@ bool checkMQTTConnection() {
       if (client.connected()) {
         Serial.print(F("MQTT connected to: "));
         Serial.println(settings.mqttBroker);
+        MQTTFailCounter = 0;
         return true;
       } else {
-        settings.useMQTT = false;
+        MQTTFailCounter++;
+        if (MQTTFailCounter > 3) settings.useMQTT = false;
         return false;
       } 
     }
@@ -1745,6 +1759,7 @@ void SaveSettings(AsyncWebServerRequest *request){
   if (request->hasParam("mqttUser")) request->getParam("mqttUser")->value().toCharArray(settings.mqttUser,25);
   if (request->hasParam("mqttPass")) request->getParam("mqttPass")->value().toCharArray(settings.mqttPass,25);
   if (request->hasParam("mqttSubject")) request->getParam("mqttSubject")->value().toCharArray(settings.mqttSubject,25);
+  settings.mqttTXUnits = request->hasParam("mqttTXUnits");
   if (request->hasParam("mqttPort")) settings.mqttPort = request->getParam("mqttPort")->value().toInt();
   settings.useWapp = request->hasParam("useWapp");
   if (request->hasParam("wappPhone")) request->getParam("wappPhone")->value().toCharArray(settings.wappPhone,25);
@@ -1784,6 +1799,7 @@ void PrintConfig(){
   Serial.printf("mqttUser: %s\r\n",settings.mqttUser);
   Serial.printf("mqttPass: %s\r\n",settings.mqttPass);
   Serial.printf("mqttSubject: %s\r\n",settings.mqttSubject);
+  Serial.printf("mqttUnits: %s\r\n",settings.mqttTXUnits?"yes":"no");
   Serial.printf("mqttPort: %d\r\n",settings.mqttPort);
   Serial.printf("useWhatsApp: %s\r\n",settings.useWapp?"yes":"no");
   Serial.printf("wappPhone: %s\r\n",settings.wappPhone);
@@ -1824,6 +1840,7 @@ String processor(const String& var){
   if (var == "mqttUser") return settings.mqttUser;
   if (var == "mqttPass") return settings.mqttPass;
   if (var == "mqttSubject") return settings.mqttSubject;
+  if (var == "mqttTXUnits") return settings.mqttTXUnits?"checked":"";
   if (var == "mqttPort") return String(settings.mqttPort);
   if (var == "useWapp") return settings.useWapp?"checked":"";
   if (var == "wappPhone") return settings.wappPhone;

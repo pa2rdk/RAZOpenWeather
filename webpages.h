@@ -480,7 +480,16 @@ const char settings_html[] PROGMEM = R"rawliteral(
               <input type="text" name="mqttSubject" value="%mqttSubject%">
             </td>
           </tr>
-        
+          
+          <tr>
+            <td style="text-align:right;font-size: medium;">
+              MQTT Units:
+            </td>
+            <td style="text-align:left;font-size: medium;">
+              <input type="checkbox" name="mqttTXUnits" value="mqttTXUnits" %mqttTXUnits%>
+            </td>
+          </tr>
+
           <tr>
             <td style="text-align:right;font-size: medium; color: white">
               MQTT Port: 
