@@ -398,6 +398,7 @@ void setup() {
 
   server.on("/golocation", HTTP_GET, [] (AsyncWebServerRequest *request) {
     if (request->hasParam("location")) settings.actualWeatherStation = request->getParam("location")->value().toInt();
+    actualPage = 0;
     SaveConfig();
     printConfig=true;
     request->send_P(200, "text/html", refresh_html, processor);
