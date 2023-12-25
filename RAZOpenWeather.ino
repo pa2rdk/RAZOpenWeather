@@ -155,6 +155,7 @@ long startTime = millis();
 bool apMode = false;
 bool printConfig = false;
 int MQTTFailCounter = 0;
+bool doTouch = false;
 
 typedef struct {
   byte chkDigit;
@@ -191,6 +192,12 @@ typedef struct {
   char latitude4[25];
   char longitude4[25];      
   bool isDebug;
+  bool reverseRotation;
+  uint16_t calData0;
+  uint16_t calData1;
+  uint16_t calData2;
+  uint16_t calData3;
+  uint16_t calData4;  
 } Settings;
 
 typedef struct {  // Location name data
@@ -247,24 +254,6 @@ void setup() {
   digitalWrite(Display_Led, displayon);
   EEPROM.begin(EEPROM_SIZE);
   tft.begin();
-  tft.setRotation(screenRotation);
-
-  // Calibration code for touchscreen : for 2.8 inch & Rotation = 0
-  // Calibration code for touchscreen : for 2.8 inch & Rotation = 2
-  uint16_t calData[5] = { 304, 3493, 345, 3499, 4 };
-  if (screenRotation == 0) {
-    calData[0] = 304;
-    calData[1] = 3493;
-    calData[2] = 345;
-    calData[3] = 3499;
-    calData[4] = 4;
-  } else {
-    calData[0] = 258;
-    calData[1] = 3566;
-    calData[2] = 413;
-    calData[3] = 3512;
-    calData[4] = 2;
-  }
 
   uint16_t touchX = 0, touchY = 0;
   bool pressed = tft.getTouch(&touchX, &touchY);
@@ -275,13 +264,17 @@ void setup() {
     delay(2000);
   }
   LoadConfig();
+  tft.setRotation(settings.reverseRotation?2:0);
+  uint16_t calData[5] = {settings.calData0, settings.calData1, settings.calData2, settings.calData3, settings.calData4};
+  tft.setTouch(calData);
+
   LoadWeatherLocations();
   settings.hasLocalTempSensor = (GetLocalTemp()>-50);
   Serial.printf("Local temp enabled:%s",settings.hasLocalTempSensor?"yes":"no");
 
   unsigned long timeout = millis();
   bool timedOut = false;
-  tft.setTouch(calData);
+
 
   locationList(); // Print locations
   
@@ -384,6 +377,15 @@ void setup() {
       request->send_P(200, "text/html", warning_html, processor);
   });
 
+  server.on("/calibrate", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    if (request->client()->remoteIP()[0] == 192 || request->client()->remoteIP()[0] == 10 || request->client()->remoteIP()[0] == 172){
+      request->send_P(200, "text/html", index_html, processor);
+      doTouch = true;
+    }
+    else
+      request->send_P(200, "text/html", warning_html, processor);
+  });
+
   server.on("/store", HTTP_GET, [] (AsyncWebServerRequest *request) {
     if (request->client()->remoteIP()[0] == 192 || request->client()->remoteIP()[0] == 10 || request->client()->remoteIP()[0] == 172){
       SaveSettings(request);
@@ -470,6 +472,10 @@ bool Connect2WiFi(){
 **                          Loop
 ***************************************************************************************/
 void loop() {
+  if (doTouch){
+    doTouch = false;
+    TouchCalibrate();
+  }
   uint16_t x = 0, y = 0;
   bool pressed = tft.getTouch(&x, &y);
   if (pressed)  {
@@ -1770,6 +1776,7 @@ void SaveSettings(AsyncWebServerRequest *request){
   settings.hasLocalTempSensor = request->hasParam("hasLocalTempSensor");  
   if (request->hasParam("updateInterval")) settings.updateInterval = request->getParam("updateInterval")->value().toInt();
   if (request->hasParam("pageDelay")) settings.pageDelay = request->getParam("pageDelay")->value().toInt();
+  settings.reverseRotation = request->hasParam("reverseRotation");
   settings.isDebug = request->hasParam("isDebug");
 
   if (request->hasParam("actualWeatherStation")) settings.actualWeatherStation = request->getParam("actualWeatherStation")->value().toInt();
@@ -1810,6 +1817,7 @@ void PrintConfig(){
   Serial.printf("hasLocalTempSensor: %s\r\n",settings.hasLocalTempSensor?"yes":"no");
   Serial.printf("updateInterval: %d\r\n",settings.updateInterval);
   Serial.printf("pageDelay: %d\r\n",settings.pageDelay);
+  Serial.printf("reverseRotation: %s\r\n",settings.reverseRotation?"yes":"no");
   Serial.printf("isDebug: %s\r\n",settings.isDebug?"yes":"no");
 
   Serial.printf("actualWeatherStation: %d\r\n",settings.actualWeatherStation);
@@ -1851,6 +1859,7 @@ String processor(const String& var){
   if (var == "hasLocalTempSensor") return settings.hasLocalTempSensor?"checked":"";  
   if (var == "updateInterval") return String(settings.updateInterval);
   if (var == "pageDelay") return String(settings.pageDelay);
+  if (var == "reverseRotation") return settings.reverseRotation?"checked":"";
   if (var == "isDebug") return settings.isDebug?"checked":"";
 
   if (var == "actualWeatherStation") return String(settings.actualWeatherStation);
@@ -2027,4 +2036,56 @@ bool CompareConfig() {
   for (unsigned int t = 0; t < sizeof(settings); t++)
     if (*((char*)&settings + t) != EEPROM.read(offsetEEPROM + t)) retVal = false;
   return retVal;
+}
+
+/***************************************************************************************
+**            Calibrate touch
+***************************************************************************************/
+void TouchCalibrate() {
+  uint16_t calData[5];
+  uint8_t calDataOK = 0;
+
+  // Calibrate
+  tft.fillScreen(TFT_BLACK);
+  tft.setCursor(20, 0);
+  tft.setTextFont(2);
+  tft.setTextSize(1);
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+
+  tft.println("Touch corners as indicated");
+
+  tft.setTextFont(1);
+  tft.println();
+
+  tft.calibrateTouch(calData, TFT_MAGENTA, TFT_BLACK, 15);
+
+  Serial.println();
+  Serial.println();
+  Serial.println("// Use this calibration code in setup():");
+  Serial.println("  uint16_t calData[5] = ");
+  Serial.println("{ ");
+
+  for (uint8_t i = 0; i < 5; i++) {
+    Serial.print(calData[i]);
+    if (i < 4) Serial.print(", ");
+  }
+  settings.calData0 = calData[0];
+  settings.calData1 = calData[1];
+  settings.calData2 = calData[2];
+  settings.calData3 = calData[3];
+  settings.calData4 = calData[4];
+  SaveConfig();
+
+  Serial.println(" };");
+  Serial.print("  tft.setTouch(calData);");
+  Serial.println();
+  Serial.println();
+
+  tft.fillScreen(TFT_BLACK);
+
+  tft.setTextColor(TFT_GREEN, TFT_BLACK);
+  tft.println("Calibration complete!");
+  tft.println("Calibration code sent to Serial port.");
+
+  delay(2000);
 }

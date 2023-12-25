@@ -1,5 +1,5 @@
 Settings settings = {
-    '+',                                //chkDigit
+    '#',                                //chkDigit
     "YourSSID",                         //wifiSSID[25];
     "YourWiFiPass!",                    //wifiPass[25];   
     "your openWether API key here",     //openWeatherAPI;
@@ -32,7 +32,13 @@ Settings settings = {
     "Cambridge Bay",                    //City4
     "69.107082",                        //Latitude4
     "-105.12177",                       //Longitude4
-    1                                   //isDebug
+    1,                                  //isDebug
+    0,                                  //reverseRotation
+    304,                                //touchRotation calData[0]
+    3493,                               //touchRotation calData[1]
+    345,                                //touchRotation calData[2]
+    3499,                               //touchRotation calData[3]
+    4                                   //touchRotation calData[4]
 };
 
 wlanSSID wifiNetworks[] {
@@ -48,7 +54,6 @@ WeatherStation weatherStation[6] = { // Max 10
   {"Zuid-pool"        , "-90.0"     , "0.0"         }
 };
 
-int screenRotation          = 0; // 0=0, 1=90, 2=180, 3=270
 const String shortDOW [8]   = {"???", "Zon", "Maa", "Din", "Woe", "Don", "Vrij", "Zat"};
 const char sunStr[]         = "Zon";
 const char cloudStr[]       = "Bewolking";

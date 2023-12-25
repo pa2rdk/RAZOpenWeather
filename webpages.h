@@ -709,6 +709,15 @@ const char settings_html[] PROGMEM = R"rawliteral(
 
           <tr>
             <td style="text-align:right;font-size: medium;">
+              Reverse screen rotation:
+            </td>
+            <td style="text-align:left;font-size: medium;">
+              <input type="checkbox" name="reverseRotation" value="reverseRotation" %reverseRotation%>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="text-align:right;font-size: medium;">
               Debugmode:
             </td>
             <td style="text-align:left;font-size: medium;">
@@ -737,6 +746,7 @@ const char settings_html[] PROGMEM = R"rawliteral(
           </td>
           <td style="text-align:right">
             <a href="/"><button class="button">Main</button></a>
+            <a href="/calibrate"><button class="button">Calibrate</button></a>
             <a href="/reboot"><button class="button">Reboot</button></a>
           </td>
         </tr>
@@ -745,7 +755,7 @@ const char settings_html[] PROGMEM = R"rawliteral(
 
   <script>
   if(typeof window.history.pushState == 'function') {
-    if (window.location.href.lastIndexOf('/command')>10 || window.location.href.lastIndexOf('/reboot')>10 || window.location.href.lastIndexOf('/store')>10){
+    if (window.location.href.lastIndexOf('/command')>10 || window.location.href.lastIndexOf('/reboot')>10 || window.location.href.lastIndexOf('/calibrate')>10 || window.location.href.lastIndexOf('/store')>10){
       console.log(window.location.href);
       window.location.href =  window.location.href.substring(0,window.location.href.lastIndexOf('/'))
     }
