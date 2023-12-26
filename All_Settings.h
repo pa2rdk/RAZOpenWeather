@@ -1,5 +1,5 @@
 Settings settings = {
-    '#',                                //chkDigit
+    '^',                                //chkDigit
     "YourSSID",                         //wifiSSID[25];
     "YourWiFiPass!",                    //wifiPass[25];   
     "your openWether API key here",     //openWeatherAPI;

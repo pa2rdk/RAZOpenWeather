@@ -1,4 +1,5 @@
 // *************************************************************************************
+//  V2.2.1  26-12-23 Calibrate touch en scherm draaibaar.
 //  V2.2.0  26-11-23 Setting wel/niet meesturen symbool in MQTT.
 //                   Refresh pages bij opstarten.
 //                   MQTT connect 3x controleren               
@@ -212,8 +213,8 @@ typedef struct {  // WiFi Access
 } wlanSSID;
 
 // check All_Settings.h for adapting to your needs
-#include "RDK_Settings.h";
-//#include "All_Settings.h";
+//#include "RDK_Settings.h";
+#include "All_Settings.h";
 
 const int nrOffLocations = (sizeof weatherStation / sizeof (WeatherStation)) - 1;
 
@@ -475,6 +476,7 @@ void loop() {
   if (doTouch){
     doTouch = false;
     TouchCalibrate();
+    lastRefresh=-1;
   }
   uint16_t x = 0, y = 0;
   bool pressed = tft.getTouch(&x, &y);
@@ -2060,15 +2062,12 @@ void TouchCalibrate() {
   tft.calibrateTouch(calData, TFT_MAGENTA, TFT_BLACK, 15);
 
   Serial.println();
-  Serial.println();
-  Serial.println("// Use this calibration code in setup():");
-  Serial.println("  uint16_t calData[5] = ");
-  Serial.println("{ ");
-
+  Serial.print("calData[5] = { ");
   for (uint8_t i = 0; i < 5; i++) {
     Serial.print(calData[i]);
     if (i < 4) Serial.print(", ");
   }
+  Serial.println(" };");
   settings.calData0 = calData[0];
   settings.calData1 = calData[1];
   settings.calData2 = calData[2];
@@ -2076,16 +2075,9 @@ void TouchCalibrate() {
   settings.calData4 = calData[4];
   SaveConfig();
 
-  Serial.println(" };");
-  Serial.print("  tft.setTouch(calData);");
-  Serial.println();
-  Serial.println();
-
   tft.fillScreen(TFT_BLACK);
 
   tft.setTextColor(TFT_GREEN, TFT_BLACK);
   tft.println("Calibration complete!");
-  tft.println("Calibration code sent to Serial port.");
-
   delay(2000);
 }
