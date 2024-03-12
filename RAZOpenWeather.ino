@@ -1,4 +1,8 @@
 // *************************************************************************************
+//  V2.2.2  12-03-24 OpenWeather library compatible with OneCall2.5 and OneCall3.0
+//                   Library included in github
+//                   Some small warnings removed
+//                   Blue moon removed            
 //  V2.2.1  26-12-23 Calibrate touch en scherm draaibaar.
 //  V2.2.0  26-11-23 Setting wel/niet meesturen symbool in MQTT.
 //                   Refresh pages bij opstarten.
@@ -213,8 +217,8 @@ typedef struct {  // WiFi Access
 } wlanSSID;
 
 // check All_Settings.h for adapting to your needs
-//#include "RDK_Settings.h";
-#include "All_Settings.h";
+//#include "RDK_Settings.h"
+#include "All_Settings.h"
 
 const int nrOffLocations = (sizeof weatherStation / sizeof (WeatherStation)) - 1;
 
@@ -244,7 +248,7 @@ DallasTemperature sensors(&oneWire);
 DeviceAddress Probe01 = { 0x28, 0xFF, 0x00, 0x91, 0x6B, 0x18, 0x01, 0x86 }; // Temp. sensor
 AsyncWebServer server(80);
 
-#include "webpages.h";
+#include "webpages.h"
 
 /***************************************************************************************
 **                          Setup
@@ -501,9 +505,11 @@ void loop() {
   if (lastRefresh < 0 || (millis() - lastRefresh > 1000UL * settings.updateInterval)) {
     Serial.println("Refresh page");
     if (lastRefresh != -1) {
-      for (int x = actualPage + 1; x <= maxPage; x++) {
-        handlePages(x);
-        delay(settings.pageDelay * 1000);
+      if (actualPage<maxPage){
+        for (int x = actualPage + 1; x <= maxPage; x++) {
+          handlePages(x);
+          delay(settings.pageDelay * 1000);
+        }
       }
       for (int x = 0; x <= actualPage; x++) {
         handlePages(x);
@@ -593,29 +599,17 @@ void handlePage0() {
 /***************************************************************************************/
 void updateWeather() {
   tft.loadFont(AA_FONT_SMALL);
-
-  if (lastRefresh == -1)
-    drawProgress(20, "Updating time...");
-  else
-    fillSegment(22, 22, 0, (int) (20 * 3.6), 16, TFT_NAVY);
-
-  if (lastRefresh == -1)
-    drawProgress(50, "Updating...");
-  else
-    fillSegment(22, 22, 0, (int) (50 * 3.6), 16, TFT_NAVY);
+  drawProgress(50, "Updating...");
 
   Serial.printf("Actual weather %d = from lat:%s and lon:%s\r\n",settings.actualWeatherStation, weatherStation[settings.actualWeatherStation].latitude, weatherStation[settings.actualWeatherStation].longitude);
   bool parsed = ow.getForecast(current, hourly, daily, settings.openWeatherAPI, weatherStation[settings.actualWeatherStation].latitude, weatherStation[settings.actualWeatherStation].longitude, "metric", "nl");
-
+  tft.fillScreen(TFT_BLACK);
   printWeather(); // For debug, turn on output with #define SERIAL_MESSAGES
 
   if (lastRefresh == -1) {
     drawProgress(100, "Done...");
     delay(2000);
     tft.fillScreen(TFT_BLACK);
-  } else {
-    fillSegment(22, 22, 0, 360, 16, TFT_NAVY);
-    fillSegment(22, 22, 0, 360, 22, TFT_BLACK);
   }
 
   if (parsed) {
@@ -627,6 +621,7 @@ void updateWeather() {
 
     // Update the temperature here so we don't need to keep
     // loading and unloading font which takes time
+    tft.loadFont(AA_FONT_SMALL);
     tft.loadFont(AA_FONT_LARGE);
     tft.setTextDatum(TR_DATUM);
     tft.setTextColor(TFT_YELLOW, TFT_BLACK);
@@ -1546,7 +1541,7 @@ if (settings.isDebug){
 /***************************************************************************************/
 void handlePage3(void) {  // first side of the solar datas
   bool oddLine = true;
-  char * contentData[] = { "<solarflux>", "<aindex>", "<kindex>",
+  const char * contentData[] = { "<solarflux>", "<aindex>", "<kindex>",
                            "<kindexnt>", "<xray>", "<sunspots>",
                            "<heliumline>", "<protonflux>", "<electonflux>",
                            "<aurora>", "<normalization>", "<latdegree>"
@@ -1576,7 +1571,7 @@ void handlePage3(void) {  // first side of the solar datas
 /***************************************************************************************/
 void handlePage4(void) {  // second side of the solar datas
   bool oddLine = true;
-  char * contentData[] = {"<solarwind>", "<magneticfield>", "<geomagfield>",
+  const char * contentData[] = {"<solarwind>", "<magneticfield>", "<geomagfield>",
                           "<signalnoise>", "<fof2>", "<muffactor>", "<muf>"
                          };   // names of content (part 2)
   tft.setFreeFont(NULL);;
