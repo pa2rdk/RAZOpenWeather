@@ -1697,7 +1697,7 @@ bool checkMQTTConnection() {
         return false;
       } 
     }
-  }
+  } else return false;
 }
 
 
