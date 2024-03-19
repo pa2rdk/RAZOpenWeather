@@ -307,7 +307,7 @@ const char index_html[] PROGMEM = R"rawliteral(
     <table>
         <tr>
           <td style="text-align:left; color:black;">
-            <h4>PI4RAZ</h4>
+            <small><b>PI4RAZ</b>(%version%)</small>
           </td>
           <td style="text-align:right;">
             <span id="stationList">%locationList%</span>
@@ -742,7 +742,7 @@ const char settings_html[] PROGMEM = R"rawliteral(
     <table>
         <tr>
           <td style="text-align:left; color:black">
-            <h4>PI4RAZ</h4>
+            <small><b>PI4RAZ</b>(%version%)</small>
           </td>
           <td style="text-align:right">
             <a href="/"><button class="button">Main</button></a>

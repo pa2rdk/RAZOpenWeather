@@ -1,4 +1,5 @@
 // *************************************************************************************
+//  V2.3    19-03-24 Version number on screen
 //  V2.2.2  12-03-24 OpenWeather library compatible with OneCall2.5 and OneCall3.0
 //                   Library included in github
 //                   Some small warnings removed
@@ -161,6 +162,7 @@ bool apMode = false;
 bool printConfig = false;
 int MQTTFailCounter = 0;
 bool doTouch = false;
+char version[] = "v2.3";
 
 typedef struct {
   byte chkDigit;
@@ -307,6 +309,8 @@ void setup() {
     ui.drawJpeg(splashFile,   0, 0);
     delay(2000);
   }
+  messageBox(version, TFT_WHITE, TFT_NAVY, 5, 215, 230, 24);
+  delay(1000);
 
   bool font_missing = false;
   if (SPIFFS.exists("/fonts/NotoSansBold15.vlw")    == false) font_missing = true;
@@ -340,7 +344,7 @@ void setup() {
     sprintf(ipNo, "%d.%d.%d.%d", WiFi.localIP()[0], WiFi.localIP()[1], WiFi.localIP()[2], WiFi.localIP()[3]);
 
     messageBox(ssid, TFT_GREEN, TFT_NAVY);
-    messageBox(ipNo, TFT_GREEN, TFT_NAVY, 5, 280, 230, 24);
+    messageBox(ipNo, TFT_GREEN, TFT_NAVY, 5, 265, 230, 24);
   } else {
     messageBox("Connect to RAZWeather", TFT_GREEN, TFT_NAVY);
     WiFi.mode(WIFI_AP);
@@ -1838,6 +1842,7 @@ void PrintConfig(){
 
 String processor(const String& var){
   char buf[150];
+  if (var == "version") return version;
   if (var == "wifiSSID") return settings.wifiSSID;
   if (var == "wifiPass") return settings.wifiPass;
   if (var == "openWeatherAPI") return settings.openWeatherAPI;
