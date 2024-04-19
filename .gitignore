@@ -3,3 +3,4 @@
 .gitignore
 .gitattributes
 RDK_Settings.h
+/build
