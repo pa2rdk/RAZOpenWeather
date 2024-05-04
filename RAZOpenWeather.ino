@@ -1,5 +1,5 @@
 // *************************************************************************************
-//  V2.5    19-04-24 OTA
+//  V2.5    04-05-24 OTA & RDKOTA Library
 //  V2.3    19-03-24 Version number on screen
 //  V2.2.2  12-03-24 OpenWeather library compatible with OneCall2.5 and OneCall3.0
 //                   Library included in github
@@ -82,8 +82,8 @@
 #define offsetEEPROM  32
 #define EEPROM_SIZE   4096
 #define TIMEZONE      euCET
-#define HOST_VERSION  "https://www.rjdekok.nl/Updates/RAZOpenWeather.version"
-#define HOST          "https://www.rjdekok.nl/Updates/RAZOpenWeather.ino.bin"
+
+#define OTAHOST      "https://www.rjdekok.nl/Updates/RAZOpenWeather"
 #define VERSION       "v2.5"
 
 /***************************************************************************************
@@ -113,7 +113,7 @@ WiFiMulti wifiMulti;
 #include <UrlEncode.h>
 //#include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
-#include <Update.h>
+#include <RDKOTA.h>
 
 // Json streaming parser:  (do not use IDE library manager version)
 #include <JSON_Decoder.h>             // https://github.com/Bodmer/JSON_Decoder
@@ -167,7 +167,6 @@ bool apMode = false;
 bool printConfig = false;
 int MQTTFailCounter = 0;
 bool doTouch = false;
-int currentLength = 0;                //current size of written firmware
 
 typedef struct {
   byte chkDigit;
@@ -224,8 +223,8 @@ typedef struct {  // WiFi Access
 } wlanSSID;
 
 // check All_Settings.h for adapting to your needs
-//#include "RDK_Settings.h"
-#include "All_Settings.h"
+#include "RDK_Settings.h"
+//#include "All_Settings.h"
 
 const int nrOffLocations = (sizeof weatherStation / sizeof (WeatherStation)) - 1;
 
@@ -234,6 +233,7 @@ GfxUi ui = GfxUi(&tft);               // Jpeg and bmpDraw functions TODO: pull o
 
 WiFiClientSecure httpsNet;
 WiFiClient httpNet;
+RDKOTA rdkOTA(OTAHOST);
 
 #include <MQTT.h>
 WiFiClient mqttNet;
@@ -340,9 +340,9 @@ void setup() {
     Serial.print("Local IP: ");
     Serial.println(WiFi.localIP());
 
-    if (checkForUpdate(VERSION, HOST_VERSION)){
+    if (rdkOTA.checkForUpdate(VERSION)){
       messageBox("Installeer update", TFT_WHITE, TFT_NAVY);
-      installUpdate(HOST);
+      rdkOTA.installUpdate();
     }
 
     String SSID = WiFi.SSID();
@@ -650,12 +650,6 @@ void updateWeather() {
   }
 
   if (settings.hasLocalTempSensor) PrintLocalTemp();
-
-  // Delete to free up space
-  // delete current;
-  // delete hourly;
-  // delete daily;
-
   tft.unloadFont();
 }
 
@@ -2090,75 +2084,3 @@ void TouchCalibrate() {
   tft.println("Calibration complete!");
   delay(2000);
 }
-
-bool checkForUpdate(String actualVersion, String HostURL){
-  bool retVal = false;
-  HTTPClient http;
-  String newVersion = actualVersion;
-  http.begin(HostURL);
-  int resp = http.GET();
-  Serial.print("checkForUpdate response: ");
-  Serial.println(resp);
-
-  if(resp == 200){
-      newVersion = http.getString();
-      newVersion.trim();
-      Serial.printf("Actual version:%s, New version: %s\r\n", actualVersion, newVersion);
-      http.end();
-  }
-
-  Serial.println(actualVersion.length());
-  Serial.println(newVersion.length());
-  if (newVersion>actualVersion) retVal = true;
-  http.end();
-  return retVal;
-}
-
-void installUpdate(String HostURL){
-  HTTPClient http;
-  int totalLength;
-
-  Serial.println("Get new version");
-  http.begin(HostURL);
-  int resp = http.GET();
-  Serial.print("Response: ");
-  Serial.println(resp);
-  if(resp == 200){
-    totalLength = http.getSize();
-    int len = totalLength;
-    // this is required to start firmware update process
-    Update.begin(UPDATE_SIZE_UNKNOWN);
-    Serial.printf("FW Size: %u\n",totalLength);
-    uint8_t buff[128] = { 0 };
-    WiFiClient * stream = http.getStreamPtr();
-    Serial.println("Updating firmware...");
-    while(http.connected() && (len > 0 || len == -1)) {
-      size_t size = stream->available();
-      if(size) {
-        int c = stream->readBytes(buff, ((size > sizeof(buff)) ? sizeof(buff) : size));
-        updateFirmware(buff, c, totalLength);
-        if(len > 0) {
-          len -= c;
-        }
-      }
-      delay(1);
-    }
-  }else{
-    Serial.println("Cannot download firmware file. Only HTTP response 200: OK is supported. Double check firmware location #defined in HOST.");
-  }
-  http.end();
-}
-
-void updateFirmware(uint8_t *data, size_t len, int totalLength){
-  Update.write(data, len);
-  currentLength += len;
-  // Print dots while waiting for update to finish
-  Serial.print('.');
-  // if current length of written firmware is not equal to total firmware size, repeat
-  if(currentLength != totalLength) return;
-  Update.end(true);
-  Serial.printf("\nUpdate Success, Total Size: %u\nRebooting...\n", currentLength);
-  // Restart ESP32 to see changes 
-  ESP.restart();
-}
-
