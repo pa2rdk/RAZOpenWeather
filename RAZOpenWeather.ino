@@ -1,4 +1,5 @@
 // *************************************************************************************
+//  V2.7    05-05-24 First OTA Update
 //  V2.5    04-05-24 OTA & RDKOTA Library - Releaseversion
 //  V2.3    19-03-24 Version number on screen
 //  V2.2.2  12-03-24 OpenWeather library compatible with OneCall2.5 and OneCall3.0
@@ -84,7 +85,7 @@
 #define TIMEZONE      euCET
 
 #define OTAHOST      "https://www.rjdekok.nl/Updates/RAZOpenWeather"
-#define VERSION       "v2.5"
+#define VERSION       "v2.7"
 
 /***************************************************************************************
 **                          Load the libraries and settings
@@ -245,9 +246,11 @@ OW_hourly  *hourly;                   // Not used
 OW_daily   *daily;
 
 //Swith LED at display
-#define Display_Led    14 
 #define ONE_WIRE_BUS_PIN 13
+#define Display_Led    14 
 #define displayon      0
+// #define Display_Led    22 //Oude print zonder connector en transistor voor LED
+// #define displayon      1
 
 OneWire oneWire(ONE_WIRE_BUS_PIN);
 DallasTemperature sensors(&oneWire);
