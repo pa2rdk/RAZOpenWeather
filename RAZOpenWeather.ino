@@ -1,5 +1,5 @@
 // *************************************************************************************
-//  V2.5    04-05-24 OTA & RDKOTA Library
+//  V2.5    04-05-24 OTA & RDKOTA Library - Releaseversion
 //  V2.3    19-03-24 Version number on screen
 //  V2.2.2  12-03-24 OpenWeather library compatible with OneCall2.5 and OneCall3.0
 //                   Library included in github
@@ -341,8 +341,10 @@ void setup() {
     Serial.println(WiFi.localIP());
 
     if (rdkOTA.checkForUpdate(VERSION)){
-      messageBox("Installeer update", TFT_WHITE, TFT_NAVY);
-      rdkOTA.installUpdate();
+      if (questionBox("Installeer update", TFT_WHITE, TFT_NAVY, 5, 240, 230, 48)){
+        messageBox("Installing update", TFT_YELLOW, TFT_NAVY, 5, 240, 230, 48);
+        rdkOTA.installUpdate();
+      } 
     }
 
     String SSID = WiFi.SSID();
@@ -926,16 +928,54 @@ void messageBox(const char *msg, uint16_t fgcolor, uint16_t bgcolor, int x, int 
   tft.loadFont(AA_FONT_SMALL);
   tft.setTextDatum(MC_DATUM);
   tft.setTextColor(fgcolor, bgcolor);
-  // tft.fillRoundRect(5, 240, 230, 24, 5, fgcolor);
-  // tft.fillRoundRect(7, 242, 226, 20, 5, bgcolor);
   tft.fillRoundRect(x, y, w, h, 5, fgcolor);
   tft.fillRoundRect(x + 2, y + 2, w - 4, h - 4, 5, bgcolor);
-  tft.drawString(msg, 120, y + (h / 2));
   tft.setTextPadding(tft.textWidth(msg));
+  tft.drawString(msg, w/2, y + (h / 2));
   tft.setTextColor(current_textcolor, current_textbgcolor);
   tft.unloadFont();
 }
 
+bool questionBox(const char *msg, uint16_t fgcolor, uint16_t bgcolor, int x, int y, int w, int h) {
+  uint16_t current_textcolor = tft.textcolor;
+  uint16_t current_textbgcolor = tft.textbgcolor;
+
+  tft.loadFont(AA_FONT_SMALL);
+  tft.setTextDatum(MC_DATUM);
+  tft.setTextColor(fgcolor, bgcolor);
+  tft.fillRoundRect(x, y, w, h, 5, fgcolor);
+  tft.fillRoundRect(x + 2, y + 2, w - 4, h - 4, 5, bgcolor);
+  tft.setTextPadding(tft.textWidth(msg));
+  tft.drawString(msg, w/2, y + (h / 4));
+
+  tft.fillRoundRect(x + 4, y + (h/2) - 2, (w - 12)/2, (h - 4)/2, 5, TFT_GREEN);
+  tft.setTextColor(fgcolor, TFT_GREEN);
+  tft.setTextPadding(tft.textWidth("Yes"));
+  tft.drawString("Yes", x + 4 + ((w - 12)/4),y + (h/2) - 2 + (h/4));
+  tft.fillRoundRect(x + (w/2) + 2, y + (h/2) - 2, (w - 12)/2, (h - 4)/2, 5, TFT_RED);
+  tft.setTextColor(fgcolor, TFT_RED);
+  tft.setTextPadding(tft.textWidth("No"));
+  tft.drawString("No", x + (w/2) + 2 + ((w - 12)/4),y + (h/2) - 2 + (h/4));
+  Serial.printf("Yes = x:%d,y:%d,w:%d,h:%d\r\n",x + 4, y + (h/2) - 2, (w - 12)/2, (h - 4)/2);
+  Serial.printf("No  = x:%d,y:%d,w:%d,h:%d\r\n",x + (w/2) + 2, y + (h/2) - 2, (w - 12)/2, (h - 4)/2);
+  tft.setTextColor(current_textcolor, current_textbgcolor);
+  tft.unloadFont();
+
+  uint16_t touchX = 0, touchY = 0;
+
+  long startWhile = millis();
+  while (millis()-startWhile<30000) {
+    bool pressed = tft.getTouch(&touchX, &touchY);
+    if (pressed){
+      Serial.printf("Pressed = x:%d,y:%d\r\n",touchX,touchY);
+      if (touchY>=y + (h/2) - 2 && touchY<=y + (h/2) - 2 + ((h - 4)/2)){
+        if (touchX>=x + 4 && touchX<=x + 4 + ((w - 12)/2)) return true;
+        if (touchX>=x + (w/2) + 2 && touchX<=x + (w/2) + 2 + ((w - 12)/2)) return false;
+      }
+    }
+  }
+  return false;
+}
 /***************************************************************************************
 **                          Draw screen section separator line
 ***************************************************************************************/
