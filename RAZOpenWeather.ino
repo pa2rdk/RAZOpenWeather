@@ -1,5 +1,5 @@
 // *************************************************************************************
-//  V2.7    05-05-24 First OTA Update
+//  V2.8    05-05-24 First OTA Update
 //  V2.5    04-05-24 OTA & RDKOTA Library - Releaseversion
 //  V2.3    19-03-24 Version number on screen
 //  V2.2.2  12-03-24 OpenWeather library compatible with OneCall2.5 and OneCall3.0
@@ -85,7 +85,7 @@
 #define TIMEZONE      euCET
 
 #define OTAHOST      "https://www.rjdekok.nl/Updates/RAZOpenWeather"
-#define VERSION       "v2.7"
+#define VERSION       "v2.8"
 
 /***************************************************************************************
 **                          Load the libraries and settings
@@ -224,8 +224,8 @@ typedef struct {  // WiFi Access
 } wlanSSID;
 
 // check All_Settings.h for adapting to your needs
-#include "RDK_Settings.h"
-//#include "All_Settings.h"
+//#include "RDK_Settings.h"
+#include "All_Settings.h"
 
 const int nrOffLocations = (sizeof weatherStation / sizeof (WeatherStation)) - 1;
 
