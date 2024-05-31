@@ -1,4 +1,5 @@
 // *************************************************************************************
+//  V3.1    31-05-24 Auto refresh bug 
 //  V2.8    05-05-24 First OTA Update
 //  V2.5    04-05-24 OTA & RDKOTA Library - Releaseversion
 //  V2.3    19-03-24 Version number on screen
@@ -85,7 +86,7 @@
 #define TIMEZONE      euCET
 
 #define OTAHOST      "https://www.rjdekok.nl/Updates/RAZOpenWeather"
-#define VERSION       "v2.8"
+#define VERSION       "v3.1"
 
 /***************************************************************************************
 **                          Load the libraries and settings
@@ -157,7 +158,8 @@ uint16_t maxWebBytes = 1700;          // max. bytes to read from content
 String solarBuf;                      // to hold the compressed content
 String contentStrings[10];            // holds the IAP data
 String tot;                           // Total string for WHATSAPP
-long lastRefresh = -2;                // Last refresh in millis()
+long lastRefresh = millis();          // Last refresh in millis()
+bool forceRefresh = true;             // Refresh after touch or internet access
 long lastWHATSAPPRefresh = -1;        // Last WHATSAPPrefresh in millis()
 long lastLocTempRefresh  = -1;        // last LocTempRefresh in millis;
 int EEPROM_ADDRESS = 0;               // EEProm address
@@ -498,8 +500,9 @@ void loop() {
   if (doTouch){
     doTouch = false;
     TouchCalibrate();
-    lastRefresh=-1;
+    forceRefresh = true;
   }
+
   uint16_t x = 0, y = 0;
   bool pressed = tft.getTouch(&x, &y);
   if (pressed)  {
@@ -509,20 +512,21 @@ void loop() {
     }
     if ((x <  90) and (y > 270)) {
       actualPage == maxPage ? actualPage = 0 : actualPage++;
-      lastRefresh = -1;
+      forceRefresh = true;
     }
     pressed = false;
   }
 
   if (printConfig){
     PrintConfig();
-    lastRefresh = -1;
+    forceRefresh = true;
     printConfig=false;
   }
 
-  if (lastRefresh < 0 || (millis() - lastRefresh > 1000UL * settings.updateInterval)) {
+  if (forceRefresh || (millis() - lastRefresh > 1000UL * settings.updateInterval)) {
+    lastRefresh = millis();
     Serial.println("Refresh page");
-    if (lastRefresh != -1) {
+    if (!forceRefresh) {
       if (actualPage<maxPage){
         for (int x = actualPage + 1; x <= maxPage; x++) {
           handlePages(x);
@@ -534,6 +538,7 @@ void loop() {
         delay(settings.pageDelay * 1000);
       }
     } else {
+      forceRefresh = false;
       handlePages(actualPage);
     }
     lastRefresh = millis();
