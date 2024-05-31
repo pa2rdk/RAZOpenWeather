@@ -523,7 +523,7 @@ void loop() {
     printConfig=false;
   }
 
-  if (forceRefresh || (millis() - lastRefresh > 1000UL * settings.updateInterval)) {
+  if (forceRefresh || ((millis() - lastRefresh > 1000UL * settings.updateInterval) && (millis() - lastRefresh > 1000UL * 120))) {
     lastRefresh = millis();
     Serial.println("Refresh page");
     if (!forceRefresh) {
