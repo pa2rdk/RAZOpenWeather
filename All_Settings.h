@@ -43,7 +43,8 @@ Settings settings = {
 
 wlanSSID wifiNetworks[] {
     {"PI4RAZ","PI4RAZ_Zoetermeer"},
-    {"Loretz_Gast", "Lor_Steg_98"}
+    {"Loretz_Gast","Lor_Steg_98"},
+    {"MARODEKWiFi", "MAROWiFi19052004!"}
 };
 
 const char *splashFile = "/splash/steg.jpg";

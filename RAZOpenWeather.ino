@@ -1,4 +1,5 @@
 // *************************************************************************************
+//  V3.2    17-10-24 MQTT fixes 
 //  V3.1    31-05-24 Auto refresh bug 
 //  V2.8    05-05-24 First OTA Update
 //  V2.5    04-05-24 OTA & RDKOTA Library - Releaseversion
@@ -86,7 +87,7 @@
 #define TIMEZONE      euCET
 
 #define OTAHOST      "https://www.rjdekok.nl/Updates/RAZOpenWeather"
-#define VERSION       "v3.1"
+#define VERSION       "v3.2"
 
 /***************************************************************************************
 **                          Load the libraries and settings
@@ -1121,15 +1122,17 @@ if (settings.serialMessages){
         client.publish(String(settings.mqttSubject) + "weather/humidity", String(current->humidity) + "%");
         client.publish(String(settings.mqttSubject) + "weather/pressure", String(current->pressure) + " mBar");
         client.publish(String(settings.mqttSubject) + "weather/wind_speed", windspeedconv(current->wind_speed) + " Bft");
+        client.publish(String(settings.mqttSubject) + "weather/clouds", String(current->clouds) + "%");
       } else {
         client.publish(String(settings.mqttSubject) + "weather/temp", String(current->temp));
         client.publish(String(settings.mqttSubject) + "weather/humidity", String(current->humidity));
         client.publish(String(settings.mqttSubject) + "weather/pressure", String(current->pressure));
         client.publish(String(settings.mqttSubject) + "weather/wind_speed", windspeedconv(current->wind_speed));
+        client.publish(String(settings.mqttSubject) + "weather/clouds", String(current->clouds));
       }
       client.publish(String(settings.mqttSubject) + "weather/wind_dir", winddir[calcWindAngle(current->wind_deg)]);
       //client.publish(String(settings.mqttSubject) + "weather/wind_dir",calcWindDirection(current->wind_deg));
-      client.publish(String(settings.mqttSubject) + "weather/clouds", String(current->clouds) + "%");
+
     }
   }
 }
