@@ -1,5 +1,5 @@
 // *************************************************************************************
-//  V3.2    17-10-24 MQTT fixes 
+//  V3.2    17-10-24 MQTT fixes for symbols
 //  V3.1    31-05-24 Auto refresh bug 
 //  V2.8    05-05-24 First OTA Update
 //  V2.5    04-05-24 OTA & RDKOTA Library - Releaseversion
