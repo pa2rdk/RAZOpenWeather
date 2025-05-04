@@ -1,4 +1,5 @@
 // *************************************************************************************
+//  V4.1    04-05-25 Added conditions to MQTT
 //  V3.2    17-10-24 MQTT fixes for symbols
 //  V3.1    31-05-24 Auto refresh bug 
 //  V2.8    05-05-24 First OTA Update
@@ -87,7 +88,13 @@
 #define TIMEZONE      euCET
 
 #define OTAHOST      "https://www.rjdekok.nl/Updates/RAZOpenWeather"
-#define VERSION       "v3.2"
+#define VERSION       "v4.1"
+//#define isCYD         //CYD Display (Cheap Yellow Display)
+/***************************************************************************************
+Change this in User_Setup_Select.h in the TFT_eSPI library 
+if no CYD: #include <Setup1_ILI9341.h>  // Setup file configured for my ILI9341  2.8 inch
+if CYD:    #include <Setup1_ILI9341CYDRAZ.h>  // Setup file configured for my ILI9341  2.8 inch on CYD
+***************************************************************************************/
 
 /***************************************************************************************
 **                          Load the libraries and settings
@@ -97,6 +104,9 @@
 #include <TFT_eSPI.h>           // https://github.com/Bodmer/TFT_eSPI
 #include <OneWire.h>            // Local temp.
 #include <DallasTemperature.h>  // Local temp.
+#ifdef isCYD
+  #include <XPT2046_Touchscreen.h>
+#endif
 
 // Additional functions
 #include "GfxUi.h"          // Attached to this sketch
@@ -233,6 +243,18 @@ typedef struct {  // WiFi Access
 const int nrOffLocations = (sizeof weatherStation / sizeof (WeatherStation)) - 1;
 
 TFT_eSPI tft = TFT_eSPI();            // Invoke custom library
+
+#ifdef isCYD
+  #define XPT2046_IRQ 36   // T_IRQ
+  #define XPT2046_MOSI 32  // T_DIN
+  #define XPT2046_MISO 39  // T_OUT
+  #define XPT2046_CLK 25   // T_CLK
+  #define XPT2046_CS 33    // T_CS
+
+  SPIClass touchscreenSPI = SPIClass(VSPI);
+  XPT2046_Touchscreen touchscreen(XPT2046_CS, XPT2046_IRQ);
+#endif
+
 GfxUi ui = GfxUi(&tft);               // Jpeg and bmpDraw functions TODO: pull outside of a class
 
 WiFiClientSecure httpsNet;
@@ -248,10 +270,17 @@ OW_current *current;                  // Pointer to structs that temporarily hol
 OW_hourly  *hourly;                   // Not used
 OW_daily   *daily;
 
-//Swith LED at display
 #define ONE_WIRE_BUS_PIN 13
-#define Display_Led    14 
-#define displayon      0
+
+//Swith LED at display
+#ifdef isCYD
+  #define Display_Led    21 
+  #define displayon      1
+#else
+  #define Display_Led    14
+  #define displayon      0
+#endif
+
 // #define Display_Led    22 //Oude print zonder connector en transistor voor LED
 // #define displayon      1
 
@@ -271,10 +300,26 @@ void setup() {
   pinMode(Display_Led, OUTPUT);
   digitalWrite(Display_Led, displayon);
   EEPROM.begin(EEPROM_SIZE);
+  #ifdef isCYD
+    touchscreenSPI.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
+    touchscreen.begin(touchscreenSPI);
+    touchscreen.setRotation(2);
+  #endif  
   tft.begin();
 
   uint16_t touchX = 0, touchY = 0;
-  bool pressed = tft.getTouch(&touchX, &touchY);
+  bool pressed=false;
+  #ifdef isCYD
+    pressed =touchscreen.tirqTouched() && touchscreen.touched();
+    if (pressed){
+      TS_Point p = touchscreen.getPoint();
+      touchX = map(p.x, 170, 3850, 1,240);
+      touchY = map(p.y, 310, 3900, 1,320);
+      printTouchToSerial(touchX, touchY, p.z);
+    }
+  #else
+    pressed = tft.getTouch(&touchX, &touchY);
+  #endif  
   if (pressed || !LoadConfig()){
     if (settings.isDebug) Serial.println(F("Writing defaults"));
     messageBox("Reset to default", TFT_WHITE, TFT_NAVY);
@@ -297,7 +342,18 @@ void setup() {
   
   bool showLocList = true;
   while (showLocList) {
-    bool pressed = tft.getTouch(&touchX, &touchY);
+    bool pressed = false;
+    #ifdef isCYD
+      pressed =touchscreen.tirqTouched() && touchscreen.touched();
+      if (pressed){
+        TS_Point p = touchscreen.getPoint();
+        touchX = map(p.x, 170, 3850, 1,240);
+        touchY = map(p.y, 310, 3900, 1,320);
+        printTouchToSerial(touchX, touchY, p.z);
+      }
+    #else
+      pressed = tft.getTouch(&touchX, &touchY);
+    #endif  
     timedOut = (millis() - timeout) > 10000;
     if (pressed or timedOut) {
       showLocList = useLocation(timedOut, touchX, touchY);
@@ -504,14 +560,31 @@ void loop() {
     forceRefresh = true;
   }
 
-  uint16_t x = 0, y = 0;
-  bool pressed = tft.getTouch(&x, &y);
+  uint16_t touchX = 0, touchY = 0;
+  bool pressed = false;
+  #ifdef isCYD
+    pressed =touchscreen.tirqTouched() && touchscreen.touched();
+    if (pressed){
+      TS_Point p = touchscreen.getPoint();
+      touchX = map(p.x, 170, 3850, 1,240);
+      touchY = map(p.y, 310, 3900, 1,320);
+      printTouchToSerial(touchX, touchY, p.z);
+    }
+  #else
+    pressed = tft.getTouch(&touchX, &touchY);
+  #endif 
   if (pressed)  {
     delay(200);
-    if ((x > 180) and (y > 270)) {
-      ESP.restart();
+    if ((touchX > 180) and (touchY > 270)) {
+      #ifdef isCYD
+        messageBox("Herstarten...", TFT_WHITE, TFT_NAVY);
+        delay(5000);
+        ESP.restart();
+      #else
+        ESP.restart();
+      #endif
     }
-    if ((x <  90) and (y > 270)) {
+    if ((touchX <  90) and (touchY > 270)) {
       actualPage == maxPage ? actualPage = 0 : actualPage++;
       forceRefresh = true;
     }
@@ -974,7 +1047,18 @@ bool questionBox(const char *msg, uint16_t fgcolor, uint16_t bgcolor, int x, int
 
   long startWhile = millis();
   while (millis()-startWhile<30000) {
-    bool pressed = tft.getTouch(&touchX, &touchY);
+    bool pressed = false;
+    #ifdef isCYD
+      pressed =touchscreen.tirqTouched() && touchscreen.touched();
+      if (pressed){
+        TS_Point p = touchscreen.getPoint();
+        touchX = map(p.x, 170, 3850, 1,240);
+        touchY = map(p.y, 310, 3900, 1,320);
+        printTouchToSerial(touchX, touchY, p.z);
+      }
+    #else
+      pressed = tft.getTouch(&touchX, &touchY);
+    #endif 
     if (pressed){
       Serial.printf("Pressed = x:%d,y:%d\r\n",touchX,touchY);
       if (touchY>=y + (h/2) - 2 && touchY<=y + (h/2) - 2 + ((h - 4)/2)){
@@ -1621,9 +1705,20 @@ void handlePage3(void) {  // first side of the solar datas
     tft.println(parseString(contentData[i]));
     oddLine = !oddLine;
   }
+
   tft.setTextColor(TFT_WHITE);
   tft.setCursor(0, 307);
   tft.print("===>>  continued next page"); //hint for page 2
+
+  if (settings.useMQTT){
+    if (checkMQTTConnection()) {
+      for (uint8_t i = 0; i < 12; i++) {  // list the content (part 1)
+        String t = contentData[i];
+        t = t.substring(1, t.length() - 1);
+        client.publish(String(settings.mqttSubject) + "conditions/"+t, parseString(contentData[i]));
+      }
+    }
+  }
 }
 
 /***************************************************************************************/
@@ -1656,6 +1751,16 @@ void handlePage4(void) {  // second side of the solar datas
   tft.setTextColor(TFT_CYAN);
   tft.setCursor(15, 306);
   tft.setTextColor(TFT_WHITE);
+
+  if (settings.useMQTT){
+    if (checkMQTTConnection()) {
+      for (uint8_t i = 0; i < 7; i++) {  // list the content (part 1)
+        String t = contentData[i];
+        t = t.substring(1, t.length() - 1);
+        client.publish(String(settings.mqttSubject) + "conditions/"+t, parseString(contentData[i]));
+      }
+    }
+  }
 }
 
 /***************************************************************************************/
@@ -2135,3 +2240,15 @@ void TouchCalibrate() {
   tft.println("Calibration complete!");
   delay(2000);
 }
+
+#ifdef isCYD
+void printTouchToSerial(int touchX, int touchY, int touchZ) {
+  Serial.print("X = ");
+  Serial.print(touchX);
+  Serial.print(" | Y = ");
+  Serial.print(touchY);
+  Serial.print(" | Pressure = ");
+  Serial.print(touchZ);
+  Serial.println();
+}
+#endif
