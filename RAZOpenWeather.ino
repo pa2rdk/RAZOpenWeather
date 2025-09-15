@@ -90,10 +90,14 @@
 #define OTAHOST      "https://www.rjdekok.nl/Updates/RAZOpenWeather"
 #define VERSION       "v4.1"
 //#define isCYD         //CYD Display (Cheap Yellow Display)
+//#define CYDLovyan       //ESP32-2432S022 with Lovyan driver
+//#define SmallCYD      //ESP32-2432S022
+#define HasTouch
 /***************************************************************************************
 Change this in User_Setup_Select.h in the TFT_eSPI library 
-if no CYD: #include <Setup1_ILI9341.h>  // Setup file configured for my ILI9341  2.8 inch
-if CYD:    #include <Setup1_ILI9341CYDRAZ.h>  // Setup file configured for my ILI9341  2.8 inch on CYD
+if no CYD:  #include <Setup1_ILI9341.h>        // Setup file configured for my ILI9341  2.8 inch
+if CYD:     #include <Setup1_ILI9341CYDRAZ.h>  // Setup file configured for my ILI9341  2.8 inch on CYD
+if SmallCYD:#include <Setup1_ST7789Parallel.h> // Setup file configured for ESP32-2432S022
 ***************************************************************************************/
 
 /***************************************************************************************
@@ -101,15 +105,25 @@ if CYD:    #include <Setup1_ILI9341CYDRAZ.h>  // Setup file configured for my IL
 ***************************************************************************************/
 #include <Arduino.h>
 #include <SPI.h>
-#include <TFT_eSPI.h>           // https://github.com/Bodmer/TFT_eSPI
+
+#ifndef CYDLovyan
+  #include <TFT_eSPI.h>         // https://github.com/Bodmer/TFT_eSPI             
+#else
+  #include <LovyanGFX.hpp>
+  #include <FS.h>
+#endif
+
 #include <OneWire.h>            // Local temp.
 #include <DallasTemperature.h>  // Local temp.
+
 #ifdef isCYD
   #include <XPT2046_Touchscreen.h>
 #endif
 
 // Additional functions
-#include "GfxUi.h"          // Attached to this sketch
+#ifndef CYDLovyan
+  #include "GfxUi.h"          // Attached to this sketch
+#endif
 #include "SPIFFS.h"         // Attached to this sketch
 
 // Multi Wifi added by PA3HK
@@ -117,14 +131,13 @@ if CYD:    #include <Setup1_ILI9341CYDRAZ.h>  // Setup file configured for my IL
 #include "soc/rtc_cntl_reg.h"
 #include <WiFi.h>
 #include <WifiMulti.h>
-#include <HTTPClient.h>  // toegevoegd
+#include <HTTPClient.h>  
 WiFiMulti wifiMulti;
 
 #include <EEPROM.h>
 #include <WiFiClientSecure.h>
 #include <WiFiUdp.h>
 #include <UrlEncode.h>
-//#include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <RDKOTA.h>
 
@@ -132,6 +145,67 @@ WiFiMulti wifiMulti;
 #include <JSON_Decoder.h>             // https://github.com/Bodmer/JSON_Decoder
 #include <OpenWeather.h>              // Latest here: https://github.com/Bodmer/OpenWeather
 #include "NTP_Time.h"                 // Attached to this sketch
+
+/***************************************************************************************
+**                          Display definition for CYDLovyan
+***************************************************************************************/
+#ifdef CYDLovyan
+class LGFX : public lgfx::LGFX_Device //Door Robert!
+  {
+      lgfx::Panel_ST7789 _panel_instance; // ST7789UI
+      lgfx::Bus_Parallel8 _bus_instance;  // MCU8080 8B
+
+  public:
+      LGFX(void)
+      {
+          {
+              auto cfg = _bus_instance.config();
+              cfg.freq_write = 25000000;
+              cfg.pin_wr = 4;
+              cfg.pin_rd = 2;
+              cfg.pin_rs = 16;
+
+              cfg.pin_d0 = 15;
+              cfg.pin_d1 = 13;
+              cfg.pin_d2 = 12;
+              cfg.pin_d3 = 14;
+              cfg.pin_d4 = 27;
+              cfg.pin_d5 = 25;
+              cfg.pin_d6 = 33;
+              cfg.pin_d7 = 32;
+
+              _bus_instance.config(cfg);
+              _panel_instance.setBus(&_bus_instance);
+          }
+
+          {
+              auto cfg = _panel_instance.config();
+
+              cfg.pin_cs = 17;
+              cfg.pin_rst = -1;
+              cfg.pin_busy = -1;
+
+              cfg.panel_width = 240;
+              cfg.panel_height = 320;
+              cfg.offset_x = 0;
+              cfg.offset_y = 0;
+              cfg.offset_rotation = 0;
+              // cfg.dummy_read_pixel = 8;
+              // cfg.dummy_read_bits = 1;
+              cfg.readable = false;
+              cfg.invert = false;
+              cfg.rgb_order = false;
+              cfg.dlen_16bit = false;
+              cfg.bus_shared = true;
+
+              _panel_instance.config(cfg);
+          }
+
+          setPanel(&_panel_instance);
+      }
+  };
+  #include <LGFX_TFT_eSPI.hpp>
+#endif
 
 /***************************************************************************************
 **                          Locations
@@ -237,12 +311,16 @@ typedef struct {  // WiFi Access
 } wlanSSID;
 
 // check All_Settings.h for adapting to your needs
-//#include "RDK_Settings.h"
+// #include "RDK_Settings.h"
 #include "All_Settings.h"
 
 const int nrOffLocations = (sizeof weatherStation / sizeof (WeatherStation)) - 1;
 
-TFT_eSPI tft = TFT_eSPI();            // Invoke custom library
+#ifndef CYDLovyan
+  TFT_eSPI tft = TFT_eSPI();            // Invoke custom library
+#else
+  TFT_eSPI tft;
+#endif
 
 #ifdef isCYD
   #define XPT2046_IRQ 36   // T_IRQ
@@ -255,7 +333,9 @@ TFT_eSPI tft = TFT_eSPI();            // Invoke custom library
   XPT2046_Touchscreen touchscreen(XPT2046_CS, XPT2046_IRQ);
 #endif
 
-GfxUi ui = GfxUi(&tft);               // Jpeg and bmpDraw functions TODO: pull outside of a class
+#ifndef CYDLovyan
+  GfxUi ui = GfxUi(&tft);               // Jpeg and bmpDraw functions TODO: pull outside of a class
+#endif
 
 WiFiClientSecure httpsNet;
 WiFiClient httpNet;
@@ -276,10 +356,18 @@ OW_daily   *daily;
 #ifdef isCYD
   #define Display_Led    21 
   #define displayon      1
+#elif defined(CYDLovyan)
+  #define Display_Led    0
+  #define displayon      1
+#elif defined(SmallCYD)
+  #define Display_Led    0
+  #define displayon      1
 #else
   #define Display_Led    14
   #define displayon      0
 #endif
+
+
 
 // #define Display_Led    22 //Oude print zonder connector en transistor voor LED
 // #define displayon      1
@@ -296,6 +384,10 @@ AsyncWebServer server(80);
 **                          Setup
 ***************************************************************************************/
 void setup() {
+  #ifdef SmallCYD
+    pinMode(32, INPUT);
+    pinMode(33, INPUT);
+  #endif
   Serial.begin(115200);
   pinMode(Display_Led, OUTPUT);
   digitalWrite(Display_Led, displayon);
@@ -318,7 +410,9 @@ void setup() {
       printTouchToSerial(touchX, touchY, p.z);
     }
   #else
-    pressed = tft.getTouch(&touchX, &touchY);
+    #ifdef HasTouch
+      pressed = tft.getTouch(&touchX, &touchY);
+    #endif
   #endif  
   if (pressed || !LoadConfig()){
     if (settings.isDebug) Serial.println(F("Writing defaults"));
@@ -329,7 +423,9 @@ void setup() {
   LoadConfig();
   tft.setRotation(settings.reverseRotation?2:0);
   uint16_t calData[5] = {settings.calData0, settings.calData1, settings.calData2, settings.calData3, settings.calData4};
-  tft.setTouch(calData);
+  #ifdef HasTouch
+    tft.setTouch(calData);
+  #endif  
 
   LoadWeatherLocations();
   settings.hasLocalTempSensor = (GetLocalTemp()>-50);
@@ -340,6 +436,7 @@ void setup() {
 
   locationList(); // Print locations
   
+  Serial.println("Show loclist");
   bool showLocList = true;
   while (showLocList) {
     bool pressed = false;
@@ -352,13 +449,17 @@ void setup() {
         printTouchToSerial(touchX, touchY, p.z);
       }
     #else
-      pressed = tft.getTouch(&touchX, &touchY);
+      #ifdef HasTouch
+        pressed = tft.getTouch(&touchX, &touchY);
+      #endif
     #endif  
     timedOut = (millis() - timeout) > 10000;
+    Serial.printf("Wait for touch or TimeOut %02d \r\n",millis() - timeout);
     if (pressed or timedOut) {
       showLocList = useLocation(timedOut, touchX, touchY);
     }
   }
+  Serial.println("Let's continu");
 
   tft.fillScreen(TFT_BLACK);
   SPIFFS.begin();
@@ -372,7 +473,13 @@ void setup() {
   }
 
   if (SPIFFS.exists(splashFile)) {
-    ui.drawJpeg(splashFile,   0, 0);
+    #ifndef CYDLovyan
+      ui.drawJpeg(splashFile,   0, 0);
+    #else
+      //tft.drawJpeg(SPIFFS, splashFile, 0, 0)
+      auto spFile = SPIFFS.open(splashFile);
+      tft.drawJpg(&spFile, 0, 0);
+    #endif  
     delay(2000);
   }
   messageBox(VERSION, TFT_WHITE, TFT_NAVY, 5, 215, 230, 24);
@@ -571,7 +678,9 @@ void loop() {
       printTouchToSerial(touchX, touchY, p.z);
     }
   #else
-    pressed = tft.getTouch(&touchX, &touchY);
+    #ifdef HasTouch
+      pressed = tft.getTouch(&touchX, &touchY);
+    #endif
   #endif 
   if (pressed)  {
     delay(200);
@@ -597,7 +706,7 @@ void loop() {
     printConfig=false;
   }
 
-  if (forceRefresh || ((millis() - lastRefresh > 1000UL * settings.updateInterval) && (millis() - lastRefresh > 1000UL * 120))) {
+  if (forceRefresh || (millis() - lastRefresh > 1000UL * settings.updateInterval)) {
     lastRefresh = millis();
     Serial.println("Refresh page");
     if (!forceRefresh) {
@@ -695,7 +804,11 @@ void handlePage0() {
 
 /***************************************************************************************/
 void updateWeather() {
-  tft.loadFont(AA_FONT_SMALL);
+  #ifndef CYDLovyan
+    tft.loadFont(AA_FONT_SMALL);
+  #else
+    tft.setFont(&fonts::Font2);     // 6x8, heel klein         
+  #endif
   drawProgress(50, "Updating...");
 
   Serial.printf("Actual weather %d = from lat:%s and lon:%s\r\n",settings.actualWeatherStation, weatherStation[settings.actualWeatherStation].latitude, weatherStation[settings.actualWeatherStation].longitude);
@@ -718,8 +831,11 @@ void updateWeather() {
 
     // Update the temperature here so we don't need to keep
     // loading and unloading font which takes time
-    tft.loadFont(AA_FONT_SMALL);
-    tft.loadFont(AA_FONT_LARGE);
+    #ifndef CYDLovyan
+      tft.loadFont(AA_FONT_LARGE);
+    #else
+      tft.setFont(&fonts::Font4);     // 6x8, heel klein        
+    #endif
     tft.setTextDatum(TR_DATUM);
     tft.setTextColor(TFT_YELLOW, TFT_BLACK);
 
@@ -746,7 +862,9 @@ void drawProgress(uint8_t percentage, String text) {
   tft.setTextPadding(240);
   tft.drawString(text, 120, 260);
 
-  ui.drawProgressBar(10, 269, 240 - 20, 15, percentage, TFT_WHITE, TFT_BLUE);
+  #ifndef CYDLovyan
+    ui.drawProgressBar(10, 269, 240 - 20, 15, percentage, TFT_WHITE, TFT_BLUE);
+  #endif
 
   tft.setTextPadding(0);
 }
@@ -755,7 +873,11 @@ void drawProgress(uint8_t percentage, String text) {
 **                          Draw the clock digits
 ***************************************************************************************/
 void drawTime() {
-  tft.loadFont(AA_FONT_LARGE);
+  #ifndef CYDLovyan
+    tft.loadFont(AA_FONT_LARGE);
+  #else
+    tft.setFont(&fonts::Font4);     // 6x8, heel klein          
+  #endif
 
   // Convert UTC to local time, returns zone code in tz1_Code, e.g "GMT"
   time_t local_time = TIMEZONE.toLocal(now(), &tz1_Code);
@@ -797,7 +919,13 @@ void drawCurrentWeather() {
 
   weatherIcon = getMeteoconIcon(current->id, true);
 
-  ui.drawBmp("/icon/" + weatherIcon + ".bmp", 0, 53);
+  String file = "/icon/" + weatherIcon + ".bmp";
+  #ifndef CYDLovyan
+    ui.drawBmp(file, 0, 53);
+  #else
+    auto spFile = SPIFFS.open(file);
+    tft.drawBmp(&spFile, 0, 53);
+  #endif
   String weatherText = current->main;
 
   tft.setTextDatum(BR_DATUM);
@@ -834,7 +962,13 @@ void drawCurrentWeather() {
 
   int windAngle = calcWindAngle(current->wind_deg);
   String wind[] = {"N", "NE", "E", "SE", "S", "SW", "W", "NW" };
-  ui.drawBmp("/wind/" + wind[windAngle] + ".bmp", 101, 86);
+  file = "/wind/" + wind[windAngle] + ".bmp";
+  #ifndef CYDLovyan
+    ui.drawBmp(file, 101, 86);
+  #else
+    spFile = SPIFFS.open(file);
+    tft.drawBmp(&spFile, 101, 86);
+  #endif  
   drawSeparator(153);
 
   tft.setTextColor(TFT_ORANGE, TFT_BLACK);
@@ -893,7 +1027,14 @@ void drawForecastDetail(uint16_t x1, uint16_t y1, uint8_t dayIndex) {
   tft.drawString(highTemp + " " + lowTemp, x1 + 25, y1 + 17);
 
   String weatherIcon = getMeteoconIcon(daily->id[dayIndex], false);
-  ui.drawBmp("/icon50/" + weatherIcon + ".bmp", x1, y1 + 18);
+  
+  String file = "/icon50/" + weatherIcon + ".bmp";
+  #ifndef CYDLovyan
+    ui.drawBmp(file, x1, y1 + 18);
+  #else
+    auto spFile = SPIFFS.open(file);
+    tft.drawBmp(&spFile, x1, y1 + 18);
+  #endif 
   tft.setTextPadding(0); // Reset padding width to none
 }
 
@@ -919,7 +1060,14 @@ void drawAstronomy() {
   tft.setTextPadding(tft.textWidth("1234567890123")); // Max string length?
 
   tft.drawString(moonPhase[ip], 120, 302);
-  ui.drawBmp("/moon/moonphase_L" + String(icon) + ".bmp", 120 - 30, 318 - 16 - 60);
+  
+  String file = "/moon/moonphase_L" + String(icon) + ".bmp";
+  #ifndef CYDLovyan
+    ui.drawBmp(file, 120 - 30, 318 - 16 - 60);
+  #else
+    auto spFile = SPIFFS.open(file);
+    tft.drawBmp(&spFile, 120 - 30, 318 - 16 - 60);
+  #endif 
 
   tft.setTextDatum(BC_DATUM);
   tft.setTextColor(TFT_ORANGE, TFT_BLACK);
@@ -1004,10 +1152,19 @@ void messageBox(const char *msg, uint16_t fgcolor, uint16_t bgcolor) {
 }
 
 void messageBox(const char *msg, uint16_t fgcolor, uint16_t bgcolor, int x, int y, int w, int h) {
-  uint16_t current_textcolor = tft.textcolor;
-  uint16_t current_textbgcolor = tft.textbgcolor;
+  #ifndef CYDLovyan
+    uint16_t current_textcolor = tft.textcolor;
+    uint16_t current_textbgcolor = tft.textbgcolor;
+  #else
+    uint16_t current_textcolor = TFT_WHITE;
+    uint16_t current_textbgcolor = TFT_BLACK;
+  #endif
 
-  tft.loadFont(AA_FONT_SMALL);
+  #ifndef CYDLovyan
+    tft.loadFont(AA_FONT_SMALL);
+  #else
+    tft.setFont(&fonts::Font2);     // 6x8, heel klein       
+  #endif
   tft.setTextDatum(MC_DATUM);
   tft.setTextColor(fgcolor, bgcolor);
   tft.fillRoundRect(x, y, w, h, 5, fgcolor);
@@ -1019,10 +1176,19 @@ void messageBox(const char *msg, uint16_t fgcolor, uint16_t bgcolor, int x, int 
 }
 
 bool questionBox(const char *msg, uint16_t fgcolor, uint16_t bgcolor, int x, int y, int w, int h) {
-  uint16_t current_textcolor = tft.textcolor;
-  uint16_t current_textbgcolor = tft.textbgcolor;
+  #ifndef CYDLovyan
+    uint16_t current_textcolor = tft.textcolor;
+    uint16_t current_textbgcolor = tft.textbgcolor;
+  #else
+    uint16_t current_textcolor = TFT_WHITE;
+    uint16_t current_textbgcolor = TFT_BLACK;
+  #endif
 
-  tft.loadFont(AA_FONT_SMALL);
+  #ifndef CYDLovyan
+    tft.loadFont(AA_FONT_SMALL);
+  #else
+    tft.setFont(&fonts::Font2);     // 6x8, heel klein       
+  #endif
   tft.setTextDatum(MC_DATUM);
   tft.setTextColor(fgcolor, bgcolor);
   tft.fillRoundRect(x, y, w, h, 5, fgcolor);
@@ -1057,7 +1223,9 @@ bool questionBox(const char *msg, uint16_t fgcolor, uint16_t bgcolor, int x, int
         printTouchToSerial(touchX, touchY, p.z);
       }
     #else
-      pressed = tft.getTouch(&touchX, &touchY);
+      #ifdef HasTouch
+        pressed = tft.getTouch(&touchX, &touchY);
+      #endif  
     #endif 
     if (pressed){
       Serial.printf("Pressed = x:%d,y:%d\r\n",touchX,touchY);
@@ -1280,11 +1448,16 @@ String windspeedconv(float windSpeed) {
 ***************************************************************************************/
 void locationList() {
   tft.fillScreen(TFT_BLACK);
-  tft.setTextSize(2);
+  #ifndef CYDLovyan
+    tft.setTextSize(2);
+  #endif  
 
   for (int n = 0; n <= nrOffLocations; n++) {
     messageBox(weatherStation[n].name, TFT_BLUE, TFT_WHITE, (weatherLocation[n].Xlocos + weatherLocation[n].Xlocnr) , (weatherLocation[n].Ylocos) + (weatherLocation[n].Ylocnr), (weatherLocation[n].Xlocsr) , (weatherLocation[n].Ylocsr));
   }
+  #ifndef CYDLovyan
+    tft.setTextSize(1);
+  #endif
 }
 
 /***************************************************************************************
@@ -1348,14 +1521,12 @@ void drawMufPagePattern(void) {
   tft.print(" E - skip 6m [EU]");
   tft.setCursor(0, 287);
   tft.print(" E - skip 4m [EU]");
-  //tft.setFreeFont(&FreeMono9pt7b);
   tft.setTextColor(TFT_WHITE);
   tft.setCursor(133, 45);
   tft.print("day");
   tft.setTextColor(TFT_CYAN);
   tft.setCursor(183, 45);
   tft.print("night");
-  //tft.setTextSize(1);
 }
 
 /***************************************************************************************/
@@ -1458,7 +1629,6 @@ void getBottomBar(void) {
 /***************************************************************************************/
 void getTopBar(void) {
   tft.setFreeFont(NULL);;
-  tft.setTextSize(1);
   tft.setTextColor(TFT_CYAN);
   char buf[40];
   String date1 = solarBuf.substring(0, 2);   // day
@@ -1492,7 +1662,6 @@ void handlePage2(int version) {     // side of the MUF-table
   String km_string[8] = {" 100", " 200", " 400", " 600", " 800", "1000", "1500", "3000"};
   uint16_t g;
 
-  tft.setTextSize(1);
   tft.fillScreen(TFT_BLACK);                       // clear blue screen
   tft.fillRoundRect(0, 0, 240, 16, 5, TFT_MAROON); // build top header
   tft.drawRoundRect(0, 0, 240, 17, 5, TFT_WHITE);
@@ -1794,7 +1963,6 @@ void drawWiFiQuality(void) {
   char buf[15];
   int8_t quality = getWifiQuality();
   tft.setTextColor(TFT_GREEN);
-  tft.setTextSize(1);
   tft.setCursor(170, 5);
   sprintf(buf, "RSSI:%2d%c", quality, '%');
   tft.print(buf);
@@ -1896,14 +2064,23 @@ float GetLocalTemp(){
 
 void PrintLocalTemp() {
   float tempL = GetLocalTemp();
-  tft.loadFont(AA_FONT_SMALL);
+  #ifndef CYDLovyan
+    tft.loadFont(AA_FONT_SMALL);
+  #else
+    tft.setFont(&fonts::Font2);     // 6x8, heel klein      
+  #endif
+
   tft.setCursor(180, 15);
   tft.setTextColor(TFT_ORANGE, TFT_BLACK);
   tft.print("Binnen");
   if (tempL == -127.00)
   {
     tft.setTextColor(TFT_RED, TFT_BLACK);
-    tft.loadFont(AA_FONT_SMALL);
+    #ifndef CYDLovyan
+      tft.loadFont(AA_FONT_SMALL);
+    #else
+      tft.setFont(&fonts::Font2);     // 6x8, heel klein       
+    #endif
     tft.setCursor(185, 32);
     tft.print("Error");
   }
@@ -2210,7 +2387,7 @@ void TouchCalibrate() {
   tft.fillScreen(TFT_BLACK);
   tft.setCursor(20, 0);
   tft.setTextFont(2);
-  tft.setTextSize(1);
+  // tft.setTextSize(1);
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
 
   tft.println("Touch corners as indicated");
@@ -2218,8 +2395,9 @@ void TouchCalibrate() {
   tft.setTextFont(1);
   tft.println();
 
-  tft.calibrateTouch(calData, TFT_MAGENTA, TFT_BLACK, 15);
-
+  #ifdef HasTouch
+    tft.calibrateTouch(calData, TFT_MAGENTA, TFT_BLACK, 15);
+  #endif
   Serial.println();
   Serial.print("calData[5] = { ");
   for (uint8_t i = 0; i < 5; i++) {
